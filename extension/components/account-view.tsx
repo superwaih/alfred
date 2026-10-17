@@ -369,9 +369,9 @@ function OwnKeyLocked() {
 }
 
 const THEMES: { value: ColorTheme; label: string; ground: string; ink: string; dots: string[] }[] = [
-  { value: "lagos", label: "Lagos", ground: "#f6f4ec", ink: "#1a1a1a", dots: ["#f4b41a", "#1aa85d", "#f2493f"] },
+  { value: "lagos", label: "Light", ground: "#f6f4ec", ink: "#1a1a1a", dots: ["#f4b41a", "#1aa85d", "#f2493f"] },
   { value: "clay", label: "Bright clay", ground: "#fff7f2", ink: "#1a1410", dots: ["#ff6a2c", "#1fc37a", "#ffbe2e"] },
-  { value: "neon", label: "Neon night", ground: "#0f0f12", ink: "#ffffff", dots: ["#ff7a1a", "#2ee59d", "#ff4d6d"] },
+  { value: "neon", label: "Dark", ground: "#0f0f12", ink: "#ffffff", dots: ["#ff7a1a", "#2ee59d", "#ff4d6d"] },
 ];
 
 function Preferences() {

@@ -10,6 +10,7 @@ import { Button } from "./ui";
 import { ApplyView } from "./apply-view";
 import { DocumentsView } from "./documents-view";
 import { ProfileView } from "./profile-view";
+import { ThemeToggle } from "./theme-toggle";
 
 type Tab = "apply" | "documents" | "profile" | "account";
 
@@ -74,6 +75,7 @@ export function App() {
     return (
       <IconContext.Provider value={{ weight: "regular" }}>
         <div className="flow-minimal">
+          <div className="absolute right-4 top-3"><ThemeToggle /></div>
           <AuthScreen />
         </div>
       </IconContext.Provider>
@@ -86,6 +88,7 @@ export function App() {
     return (
       <IconContext.Provider value={{ weight: "regular" }}>
         <div className="flow-minimal">
+          <div className="flex justify-end px-4 pt-3"><ThemeToggle /></div>
           <SetupView
           onFinish={() => {
             setInSetup(false);
@@ -107,16 +110,19 @@ export function App() {
             <BowTie className="h-2.5 w-auto text-accent" />
             Alfred
           </span>
-          {session && (
-            <button
-              type="button"
-              onClick={() => setTab("account")}
-              className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-control)] px-2.5 text-[12px] font-medium tabular-nums text-ink-soft transition-colors duration-200 hover:bg-sunken hover:text-ink"
-            >
-              <CoinsIcon aria-hidden className="h-4 w-4 text-accent" />
-              {session.user.credits} credits
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            {session && (
+              <button
+                type="button"
+                onClick={() => setTab("account")}
+                className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-control)] px-2.5 text-[12px] font-medium tabular-nums text-ink-soft transition-colors duration-200 hover:bg-sunken hover:text-ink"
+              >
+                <CoinsIcon aria-hidden className="h-4 w-4 text-accent" />
+                {session.user.credits} credits
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Keyed by tab so each view plays its entrance when opened. */}
