@@ -1,26 +1,195 @@
 @import "tailwindcss";
 
+/*
+ * Alfred — loud and flat.
+ *
+ * Lagos colours, set like a street poster: danfo yellow, flag green, a
+ * livery coral, night black and bone. Saturated chapters keep their colour
+ * in both themes. The "ground" (hero, the brand story, the footer) is night
+ * in the dark theme and bone in the light one, and its inks are re-tuned for
+ * each rather than inverted.
+ */
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #1a1a1a;
+  --ground-step: #262523;
+  --ground-ink: #efefeb;
+  --ground-soft: #b3ad9f;
+  /* Second ink of the hero and the action on the ground. */
+  --signal: #f4b41a;
+  --action: #f4b41a;
+  --action-ink: #1a1a1a;
+  --focus: #f4b41a;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --ground: #e7e7e2;
+  --ground-step: #dcdcd5;
+  --ground-ink: #1a1a1a;
+  --ground-soft: #57534a;
+  --signal: #c8231b;
+  --action: #1a1a1a;
+  --action-ink: #e7e7e2;
+  --focus: #1a1a1a;
+}
+
+/* Fixed fields: the same in both themes. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --danfo: #f4b41a;
+  --coral: #f03d34;
+  --naija: #149a52;
+  --night: #1a1a1a;
+  --bone: #e7e7e2;
+  --deep: #0d4a2b;
+  --paper: #fbfbfb;
+  --ink: #1a1a1a;
+  --ink-soft: #55554f;
+  --field: #ededea;
+  --field-off: #e2e2de;
+  --field-off-ink: #5a5a54;
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ground: var(--ground);
+  --color-ground-step: var(--ground-step);
+  --color-ground-ink: var(--ground-ink);
+  --color-ground-soft: var(--ground-soft);
+  --color-signal: var(--signal);
+  --color-action: var(--action);
+  --color-action-ink: var(--action-ink);
+  --color-danfo: var(--danfo);
+  --color-coral: var(--coral);
+  --color-naija: var(--naija);
+  --color-night: var(--night);
+  --color-bone: var(--bone);
+  --color-deep: var(--deep);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-field: var(--field);
+  --color-field-off: var(--field-off);
+  --color-field-off-ink: var(--field-off-ink);
+
+  --font-sans: var(--font-chivo), ui-sans-serif, system-ui, sans-serif;
+
+  /* Five steps do all the visible work. */
+  --text-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --text-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --text-lead: clamp(1.375rem, 1rem + 1.2vw, 2.125rem);
+  --text-head: clamp(2.5rem, 1.2rem + 5vw, 5.5rem);
+  --text-display: clamp(4.1rem, 14vw, 13.75rem);
+
+  --ease-spring: var(--ease-spring);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ground);
+  color: var(--ground-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+/*
+ * Print grain: the page is a poster, so it gets a little ink texture. One
+ * fixed layer that never scrolls or takes pointer events.
+ */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: var(--danfo);
+  color: var(--night);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+h1, h2, h3, dt {
+  text-wrap: balance;
+}
+
+p, dd, li, figcaption {
+  text-wrap: pretty;
+}
+
+.display {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+  line-height: 0.86;
+}
+
+/* Header takes the field and ink of the chapter beneath it. */
+.chapter-header {
+  --h-bg: var(--ground);
+  --h-ink: var(--ground-ink);
+  background: var(--h-bg);
+  color: var(--h-ink);
+  transition:
+    background-color 300ms var(--ease-spring),
+    color 300ms var(--ease-spring);
+}
+.chapter-header[data-on="danfo"] { --h-bg: var(--danfo); --h-ink: var(--night); }
+.chapter-header[data-on="coral"] { --h-bg: var(--coral); --h-ink: var(--night); }
+.chapter-header[data-on="naija"] { --h-bg: var(--naija); --h-ink: var(--night); }
+.chapter-header[data-on="night"] { --h-bg: var(--night); --h-ink: var(--bone); }
+.chapter-header[data-on="bone"] { --h-bg: var(--bone); --h-ink: var(--night); }
+
+/* Highlighter: flat colour behind the words, no gradient. */
+.hl {
+  background-color: var(--hl, var(--danfo));
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding-inline: 0.12em;
+}
+
+/*
+ * Entrances. Only hidden when script is running and motion is welcome,
+ * so content never stays invisible.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 700ms var(--ease-spring),
+      transform 900ms var(--ease-spring);
+    transition-delay: calc(var(--i, 0) * 80ms);
+  }
+  .js [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Alfred
 
-## Getting Started
+Alfred is a Chrome extension that fills job applications from a saved profile, tailors your CV and drafts cover letters. The user always reviews and presses Submit.
 
-First, run the development server:
+This repository holds three parts:
+
+| Folder | What it is |
+| --- | --- |
+| `app/`, `components/` | The landing page and the API (Next.js 16). |
+| `app/api/v1/` | The API the extension calls: accounts, credits, Polar checkout and webhooks, AI tasks on DeepSeek. |
+| `extension/` | The Chrome extension (WXT, Manifest V3, React). See [extension/README.md](extension/README.md). |
+| `shared/` | Code both sides use: the profile shape, the field vocabulary, AI prompts and output schemas. |
+
+## Running locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env.local   # then fill it in
+pnpm dev                     # site and API on http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The API needs MongoDB (`MONGODB_URI`), an `AUTH_SECRET` of 32+ characters, and a `DEEPSEEK_API_KEY` for credits mode. Payments need a Polar access token, webhook secret and one Polar product per credit pack (`POLAR_CREDIT_PACKS`). Every variable is described in `.env.example`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Then run the extension (see its README) and point it at `http://localhost:3000`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How AI is paid for
 
-## Learn More
+- **Credits** (default): new accounts get `STARTER_CREDITS`. Tasks are charged before they run and refunded if they fail. Credits are bought through Polar; the `order.paid` webhook grants them once per order.
+- **Own key**: users can add a DeepSeek, Anthropic, OpenAI, Gemini or any OpenAI-compatible key in the extension. Calls go straight from the browser to that provider; Alfred's servers never see the key. In "auto" mode the extension uses credits first and falls back to the user's key when credits run out.
 
-To learn more about Next.js, take a look at the following resources:
+Form filling itself never uses AI and is always free.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Polar setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Create one product per credit pack in Polar and put their ids in `POLAR_CREDIT_PACKS`.
+2. Add a webhook endpoint at `https://<your-domain>/api/v1/webhooks/polar` for the `order.paid` event, and copy its secret to `POLAR_WEBHOOK_SECRET`.
+3. Use `POLAR_ENVIRONMENT=sandbox` until you've tested a purchase end to end.
 
-## Deploy on Vercel
+## Checks
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm lint && npx tsc --noEmit && pnpm build
+```

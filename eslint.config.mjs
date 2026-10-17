@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Installed design skills and their working files.
+    ".agents/**",
+    ".claude/**",
+    ".taste-skill/**",
+    // The extension has its own toolchain and lint setup.
+    "extension/**",
   ]),
 ]);
 
