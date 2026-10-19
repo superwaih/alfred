@@ -18,8 +18,8 @@ const questions = [
     a: "The things every application asks for: contact details, work history, education, links and the answers you find yourself typing again and again. You fill it in once and update it when something changes.",
   },
   {
-    q: "Which job sites does it work on?",
-    a: "Alfred works on supported job application pages in Chrome. When it recognises a form, it tells you what it can fill before it touches anything.",
+    q: "Where does it work?",
+    a: "On Greenhouse, Lever and Workday, and on most other careers sites. It runs in Chrome and in any browser built on Chromium: Microsoft Edge, Brave, Arc, Opera and Vivaldi all install it from the Chrome Web Store. Safari and Firefox aren’t supported yet.",
   },
   {
     q: "Is this only for people in Nigeria?",

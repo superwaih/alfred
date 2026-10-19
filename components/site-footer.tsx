@@ -20,7 +20,7 @@ export function SiteFooter() {
             aria-hidden
             className={`flex flex-1 items-end justify-center overflow-hidden ${block} ${height}`}
           >
-            <span className="display translate-y-[0.08em] text-[clamp(3rem,13vw,13rem)] leading-[0.8] text-ground">
+            <span className={`display translate-y-[0.08em] text-[clamp(3rem,13vw,13rem)] leading-[0.8] ${block === "bg-ground-ink" ? "text-ground" : "text-night"}`}>
               {letter}
             </span>
           </span>
@@ -28,8 +28,9 @@ export function SiteFooter() {
       </div>
 
       <p className="mt-14 max-w-[56rem] text-lead font-bold leading-snug tracking-[-0.02em]">
-        Alfred is a Chrome extension that fills job applications from your saved profile, tailors
-        your CV and drafts your cover letter. You review it. You submit it.
+        Alfred is a browser extension for Chrome and every Chromium browser. It fills job
+        applications from your saved profile, tailors your CV and drafts your cover letter. You
+        review it. You submit it.
       </p>
 
       <div className="mt-14 grid gap-10 text-small sm:grid-cols-2 lg:grid-cols-12">
@@ -49,7 +50,10 @@ export function SiteFooter() {
           <a href={INSTALL_URL} target="_blank" rel="noopener noreferrer" className="mt-2 block hover:text-signal">
             Chrome Web Store
           </a>
-          <p className="mt-2 text-ground-soft">Works on supported job application pages.</p>
+          <p className="mt-2 text-ground-soft">Chrome, Edge, Brave, Arc, Opera, Vivaldi and other Chromium browsers.</p>
+          <a href="/privacy" className="mt-4 block font-bold hover:text-signal">
+            Privacy policy
+          </a>
         </div>
         <div className="lg:col-span-4">
           <p className="font-bold">Pictures</p>

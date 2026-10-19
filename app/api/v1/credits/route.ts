@@ -1,4 +1,4 @@
-import { OWN_KEY_UNLOCK_COST, TASK_COST } from "@/shared/ai";
+import { appSettings } from "@/lib/server/settings";
 import { requireUser } from "@/lib/server/auth";
 import { hasUsedFreeCvImport, recentLedger } from "@/lib/server/credits";
 import { env } from "@/lib/server/env";
@@ -8,12 +8,13 @@ export const OPTIONS = preflight;
 
 export const GET = handle(async (request) => {
   const user = await requireUser(request);
+  const settings = await appSettings();
   return json(request, {
     credits: user.credits,
-    costs: TASK_COST,
+    costs: settings.taskCosts,
     freeCvImport: !(await hasUsedFreeCvImport(user._id)),
     ownKeyUnlocked: Boolean(user.ownKeyUnlocked),
-    ownKeyUnlockCost: OWN_KEY_UNLOCK_COST,
+    ownKeyUnlockCost: settings.ownKeyUnlockCost,
     packs: env.creditPacks().map(({ id, credits, label, price }) => ({ id, credits, label, price })),
     history: await recentLedger(user._id),
   });

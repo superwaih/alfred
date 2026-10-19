@@ -1,6 +1,6 @@
 import { useId, useState, type InputHTMLAttributes, type ReactNode } from "react";
 import { ArrowRightIcon, EnvelopeSimpleIcon, EyeIcon, EyeSlashIcon, LockSimpleIcon, UserIcon, type Icon } from "@phosphor-icons/react";
-import { register, signIn } from "@/lib/api";
+import { forgotPassword, register, resetPassword, signIn, verifyRegistration } from "@/lib/api";
 import { Segmented } from "./account-view";
 import { Button, controlClass, errorMessage, Notice } from "./ui";
 
@@ -25,16 +25,33 @@ export function AuthScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [step, setStep] = useState<"credentials" | "verify" | "forgot" | "reset">("credentials");
+  const [challengeId, setChallengeId] = useState("");
+  const [code, setCode] = useState("");
+  const [message, setMessage] = useState("");
   const creating = mode === "up";
+
+  function backToSignIn() {
+    setStep("credentials"); setMode("in"); setCode(""); setPassword(""); setError(""); setMessage("");
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError("");
     try {
-      if (creating) await register(email, password, name);
-      else await signIn(email, password);
-      // The session item updates and the app moves on to setup by itself.
+      if (step === "verify") await verifyRegistration(challengeId, code);
+      else if (step === "forgot") {
+        setChallengeId((await forgotPassword(email)).challengeId);
+        setPassword(""); setCode(""); setStep("reset");
+        setMessage("If that account exists, we’ve sent a reset code. Check your inbox and spam folder.");
+      } else if (step === "reset") {
+        await resetPassword(challengeId, code, password);
+        backToSignIn(); setMessage("Password updated. Sign in with your new password.");
+      } else if (creating) {
+        setChallengeId((await register(email, password, name)).challengeId);
+        setStep("verify"); setCode(""); setMessage("Check your email for a six-digit code. It expires in 10 minutes.");
+      } else await signIn(email, password);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -49,32 +66,39 @@ export function AuthScreen() {
           <BowTie className="h-2.5 w-auto" />
         </span>
 
-        <Segmented
+        {step === "credentials" && <Segmented
           label="Account"
           value={mode}
           onChange={(value) => {
             setMode(value);
-            setError("");
+            setError(""); setMessage("");
           }}
           options={[
             { value: "up", label: "Create account" },
             { value: "in", label: "Sign in" },
           ]}
-        />
+        />}
+
+        {step !== "credentials" && <h1 className="serif text-[28px] text-ink">{step === "verify" ? "Verify your email" : "Reset your password"}</h1>}
+        {message && <Notice>{message}</Notice>}
 
         <form onSubmit={submit} className="space-y-3">
-          {creating && <IconField icon={UserIcon} label="Name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />}
-          <IconField icon={EnvelopeSimpleIcon} label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-          <IconField
+          {step === "credentials" && creating && <IconField icon={UserIcon} label="Name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />}
+          {(step === "credentials" || step === "forgot") && <IconField icon={EnvelopeSimpleIcon} label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />}
+          {(step === "verify" || step === "reset") && <>
+            <p className="text-[13px] text-ink-soft">Code sent to {email}</p>
+            <IconField icon={EnvelopeSimpleIcon} label="Six-digit code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))} />
+          </>}
+          {(step === "credentials" || step === "reset") && <IconField
             icon={LockSimpleIcon}
-            label="Password"
+            label={step === "reset" ? "New password" : "Password"}
             type={showPassword ? "text" : "password"}
             required
-            minLength={creating ? MIN_PASSWORD : 1}
+            minLength={creating || step === "reset" ? MIN_PASSWORD : 1}
             placeholder={creating ? `At least ${MIN_PASSWORD} characters` : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            autoComplete={creating ? "new-password" : "current-password"}
+            autoComplete={creating || step === "reset" ? "new-password" : "current-password"}
             trailing={
               <button
                 type="button"
@@ -86,14 +110,25 @@ export function AuthScreen() {
                 {showPassword ? <EyeSlashIcon aria-hidden className="h-4 w-4" /> : <EyeIcon aria-hidden className="h-4 w-4" />}
               </button>
             }
-          />
+          />}
 
           {error && <Notice tone="stop">{error}</Notice>}
 
           <Button type="submit" size="lg" className="w-full" trailing={ArrowRightIcon} busy={busy}>
-            {creating ? "Create account" : "Sign in"}
+            {step === "verify" ? "Verify and create account" : step === "forgot" ? "Send reset code" : step === "reset" ? "Set new password" : creating ? "Create account" : "Sign in"}
           </Button>
         </form>
+        {step === "credentials" && !creating && <button type="button" className="text-[13px] text-ink underline underline-offset-4" onClick={() => { setStep("forgot"); setError(""); setMessage(""); }}>Forgot password?</button>}
+        {step !== "credentials" && <div className="flex flex-wrap gap-4 text-[13px]">
+          <button type="button" disabled={busy} className="text-ink underline underline-offset-4" onClick={backToSignIn}>Back to sign in</button>
+          {(step === "verify" || step === "reset") && <button type="button" disabled={busy} className="text-ink underline underline-offset-4" onClick={async () => {
+            setBusy(true); setError("");
+            try {
+              const next = step === "verify" ? await register(email, password, name) : await forgotPassword(email);
+              setChallengeId(next.challengeId); setCode(""); setMessage("A new code has been sent. Check your inbox and spam folder.");
+            } catch (err) { setError(errorMessage(err)); } finally { setBusy(false); }
+          }}>Resend code</button>}
+        </div>}
       </div>
     </div>
   );

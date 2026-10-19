@@ -69,7 +69,7 @@ export function Button({
       type="button"
       disabled={disabled || busy}
       aria-busy={busy || undefined}
-      className={`group inline-flex shrink-0 items-center justify-center rounded-[var(--r-button)] font-semibold transition-[transform,background-color,box-shadow] duration-500 ease-spring active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${tones} ${sizes} ${pad} ${className}`}
+      className={`group inline-flex shrink-0 items-center justify-center rounded-[var(--r-button)] font-semibold transition-[transform,background-color,box-shadow] duration-500 ease-spring active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-sunken disabled:text-ink-faint disabled:shadow-none disabled:hover:brightness-100 ${tones} ${sizes} ${pad} ${className}`}
       {...rest}
     >
       {busy ? (

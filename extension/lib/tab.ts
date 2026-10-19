@@ -11,8 +11,11 @@ export type ActivePage = {
 
 export class PageUnavailable extends Error {}
 
+/** Set when Alfred runs in its own window (browsers without a side panel): the window it serves. */
+const servedWindow = Number(new URLSearchParams(globalThis.location?.search ?? "").get("window")) || undefined;
+
 async function activeTab() {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await browser.tabs.query(servedWindow ? { active: true, windowId: servedWindow } : { active: true, currentWindow: true });
   if (!tab?.id || !tab.url) throw new PageUnavailable("Open a job application in this window.");
   if (!/^https?:/.test(tab.url)) throw new PageUnavailable("Alfred works on web pages. Open a job application to begin.");
   return tab as typeof tab & { id: number; url: string };

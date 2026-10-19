@@ -1,5 +1,6 @@
+import { fetchCredits } from "@/lib/api";
 import { useEffect, useState } from "react";
-import { BriefcaseIcon, CoinsIcon, FileTextIcon, IconContext, UserCircleIcon, WalletIcon, type Icon } from "@phosphor-icons/react";
+import { BriefcaseIcon, CoinsIcon, IconContext, UserCircleIcon, WalletIcon, type Icon } from "@phosphor-icons/react";
 import { setupComplete } from "@/lib/setup-progress";
 import { profileItem, resumeFileItem, sessionItem, setupItem, themeItem, resolveTheme } from "@/lib/storage";
 import { useStored } from "@/hooks/use-stored";
@@ -8,15 +9,13 @@ import { AuthScreen } from "./auth-screen";
 import { SetupView } from "./setup-view";
 import { Button } from "./ui";
 import { ApplyView } from "./apply-view";
-import { DocumentsView } from "./documents-view";
 import { ProfileView } from "./profile-view";
 import { ThemeToggle } from "./theme-toggle";
 
-type Tab = "apply" | "documents" | "profile" | "account";
+type Tab = "apply" | "profile" | "account";
 
 const TABS: { id: Tab; label: string; icon: Icon }[] = [
   { id: "apply", label: "Apply", icon: BriefcaseIcon },
-  { id: "documents", label: "Documents", icon: FileTextIcon },
   { id: "profile", label: "Profile", icon: UserCircleIcon },
   { id: "account", label: "Account", icon: WalletIcon },
 ];
@@ -35,7 +34,10 @@ function BowTie({ className }: { className?: string }) {
 function useTheme() {
   const [theme] = useStored(themeItem);
   useEffect(() => {
-    if (theme) document.documentElement.setAttribute("data-theme", resolveTheme(theme));
+    if (!theme) return;
+    const resolved = resolveTheme(theme);
+    document.documentElement.setAttribute("data-theme", resolved);
+    if (theme !== resolved) void themeItem.setValue(resolved);
   }, [theme]);
 }
 
@@ -63,6 +65,14 @@ export function App() {
 
   // Signing out and back in starts from the progress again.
   const signedIn = Boolean(session);
+  useEffect(() => {
+    if (!signedIn) return;
+    const refresh = () => { void fetchCredits().catch(() => undefined); };
+    refresh();
+    window.addEventListener("focus", refresh);
+    const timer = window.setInterval(refresh, 60_000);
+    return () => { window.removeEventListener("focus", refresh); window.clearInterval(timer); };
+  }, [signedIn]);
   useEffect(() => {
     if (!signedIn) setInSetup(null);
   }, [signedIn]);
@@ -131,10 +141,8 @@ export function App() {
             <ApplyView
               setupBanner={banner}
               onOpenProfile={() => (complete ? setTab("profile") : setInSetup(true))}
-              onOpenDocuments={() => setTab("documents")}
             />
           )}
-          {tab === "documents" && <DocumentsView onOpenProfile={() => (complete ? setTab("profile") : setInSetup(true))} />}
           {tab === "profile" && <ProfileView setupBanner={banner} />}
           {tab === "account" && <AccountView />}
         </main>

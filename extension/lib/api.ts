@@ -1,5 +1,5 @@
 import type { AiTask, TaskInput, TaskOutput } from "@shared/ai";
-import { sessionItem, type Session } from "./storage";
+import { billingItem, sessionItem, type Session } from "./storage";
 
 /** Alfred's API. Set WXT_API_URL in extension/.env for production builds. */
 export const API_URL = (import.meta.env.WXT_API_URL as string | undefined) || "http://localhost:3000";
@@ -37,14 +37,23 @@ async function request<T>(path: string, init: RequestInit & { auth?: boolean } =
   return body as T;
 }
 
-export async function register(email: string, password: string, name: string): Promise<Session> {
-  const session = await request<Session>("/auth/register", {
-    method: "POST",
-    body: JSON.stringify({ email, password, name }),
-    auth: false,
-  });
+export async function register(email: string, password: string, name: string): Promise<{ challengeId: string }> {
+  return request("/auth/register", { method: "POST", body: JSON.stringify({ email, password, name }), auth: false });
+}
+
+export async function verifyRegistration(challengeId: string, code: string): Promise<Session> {
+  const session = await request<Session>("/auth/verify-email", { method: "POST", body: JSON.stringify({ challengeId, code }), auth: false });
+  await billingItem.setValue(null);
   await sessionItem.setValue(session);
   return session;
+}
+
+export async function forgotPassword(email: string): Promise<{ challengeId: string }> {
+  return request("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }), auth: false });
+}
+
+export async function resetPassword(challengeId: string, code: string, password: string): Promise<void> {
+  await request("/auth/reset-password", { method: "POST", body: JSON.stringify({ challengeId, code, password }), auth: false });
 }
 
 export async function signIn(email: string, password: string): Promise<Session> {
@@ -53,6 +62,7 @@ export async function signIn(email: string, password: string): Promise<Session> 
     body: JSON.stringify({ email, password }),
     auth: false,
   });
+  await billingItem.setValue(null);
   await sessionItem.setValue(session);
   return session;
 }
@@ -61,6 +71,7 @@ export async function signIn(email: string, password: string): Promise<Session> 
 export async function signOut(everywhere = false): Promise<void> {
   if (everywhere) await request("/auth/logout", { method: "POST" }).catch(() => undefined);
   await sessionItem.setValue(null);
+  await billingItem.setValue(null);
 }
 
 export type CreditsInfo = {
@@ -76,6 +87,7 @@ export type CreditsInfo = {
 
 export async function fetchCredits(): Promise<CreditsInfo> {
   const info = await request<CreditsInfo>("/credits");
+  await billingItem.setValue({ costs: info.costs, ownKeyUnlockCost: info.ownKeyUnlockCost, freeCvImport: info.freeCvImport });
   await updateBalance(info.credits);
   const session = await sessionItem.getValue();
   if (session && session.user.ownKeyUnlocked !== info.ownKeyUnlocked) {
@@ -105,6 +117,10 @@ export async function runTaskWithCredits<T extends AiTask>(task: T, input: TaskI
     body: JSON.stringify({ input }),
   });
   await updateBalance(result.credits);
+  if (task === "parse-cv") {
+    const billing = await billingItem.getValue();
+    if (billing) await billingItem.setValue({ ...billing, freeCvImport: false });
+  }
   return result.output;
 }
 

@@ -39,7 +39,7 @@ export function WhyAlfred() {
             ))}
             <div data-reveal className={STAGGER[3]}>
               <ActionLink href={INSTALL_URL} tone="bg-danfo text-night">
-                Add to Chrome
+                Add to your browser
               </ActionLink>
             </div>
           </div>

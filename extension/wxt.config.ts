@@ -24,5 +24,7 @@ export default defineConfig({
     // Alfred's API or the AI provider you chose.
     host_permissions: ["<all_urls>"],
     action: { default_title: "Open Alfred" },
+    // The side panel API arrived in Chrome 114; older Chromium builds use Alfred's own window instead.
+    minimum_chrome_version: "110",
   },
 });

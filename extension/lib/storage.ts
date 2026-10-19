@@ -1,6 +1,6 @@
 import { storage } from "wxt/utils/storage";
 import { emptyProfile, type Profile } from "@shared/profile";
-import type { TailoredCv, CoverLetter } from "@shared/ai";
+import type { TailoredCv, CoverLetter, AiTask } from "@shared/ai";
 
 /** The user's profile. Lives only in this browser; never synced to Alfred's servers. */
 export const profileItem = storage.defineItem<Profile>("local:profile", {
@@ -74,18 +74,16 @@ export const preparedDocsItem = storage.defineItem<PreparedDocs | null>("local:p
   fallback: null,
 });
 
-/** The panel's colour theme. */
-export type ColorTheme = "lagos" | "clay" | "neon";
+/** The two supported appearance modes. */
+export type ColorTheme = "light" | "dark";
 
-/** Stored value; "system" | "dark" | "light" are from older versions. */
-export const themeItem = storage.defineItem<ColorTheme | "system" | "dark" | "light">("local:theme", {
-  fallback: "lagos",
+/** Legacy values remain readable so existing users keep their preferred brightness. */
+export const themeItem = storage.defineItem<ColorTheme | "system" | "lagos" | "clay" | "neon">("local:theme", {
+  fallback: "light",
 });
 
-/** Maps older stored values onto the current themes. */
 export function resolveTheme(value: string | undefined): ColorTheme {
-  if (value === "clay" || value === "neon" || value === "lagos") return value;
-  return value === "dark" ? "neon" : "lagos";
+  return value === "dark" || value === "neon" ? "dark" : "light";
 }
 
 /**
@@ -102,3 +100,6 @@ export type SetupState = {
 export const setupItem = storage.defineItem<SetupState>("local:setup", {
   fallback: { done: false, skipped: false },
 });
+
+/** Latest server prices for labels; charging is always decided by the API. */
+export const billingItem = storage.defineItem<{ costs: Record<AiTask, number>; ownKeyUnlockCost: number; freeCvImport: boolean } | null>("local:billing", { fallback: null });

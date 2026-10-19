@@ -1,6 +1,12 @@
 // Replace with the extension's Chrome Web Store listing once it is published.
 export const INSTALL_URL = "https://chromewebstore.google.com/";
 
+/** Alfred installs from the Chrome Web Store into any Chromium browser. */
+export const BROWSERS = ["Chrome", "Edge", "Brave", "Arc", "Opera", "Vivaldi"] as const;
+
+/** Where people reach a human about privacy or their account. Confirm before launch. */
+export const CONTACT_EMAIL = "hello@alfreed.space";
+
 export const CHAPTERS = [
   { id: "bombing", label: "Bombing" },
   { id: "how-it-goes", label: "How it goes" },

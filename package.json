@@ -6,9 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:auth": "node --conditions=react-server --env-file=.env scripts/test-auth.mjs",
+    "seed:admin": "node --conditions=react-server --env-file=.env scripts/seed-admin.mjs"
   },
   "dependencies": {
+    "@phosphor-icons/react": "2.1.10",
     "@polar-sh/sdk": "^1.0.2",
     "gsap": "^3.15.0",
     "jose": "^6.2.12",
@@ -27,6 +30,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "jiti": "^2.7.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

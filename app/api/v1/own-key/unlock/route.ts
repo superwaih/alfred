@@ -1,4 +1,4 @@
-import { OWN_KEY_UNLOCK_COST } from "@/shared/ai";
+import { appSettings } from "@/lib/server/settings";
 import { publicUser, requireUser } from "@/lib/server/auth";
 import { unlockOwnKey } from "@/lib/server/credits";
 import { users } from "@/lib/server/db";
@@ -9,7 +9,8 @@ export const OPTIONS = preflight;
 /** One-time unlock of "use my own API key", paid in credits. */
 export const POST = handle(async (request) => {
   const user = await requireUser(request);
-  const result = await unlockOwnKey(user._id, OWN_KEY_UNLOCK_COST);
+  const settings = await appSettings();
+  const result = await unlockOwnKey(user._id, settings.ownKeyUnlockCost);
   const fresh = (await (await users()).findOne({ _id: user._id })) ?? user;
   return json(request, { user: publicUser(fresh), charged: result.charged });
 });

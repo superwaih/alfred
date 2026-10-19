@@ -1,14 +1,9 @@
 @import "tailwindcss";
 @import "@fontsource-variable/newsreader";
 
-/*
- * Alfred's side panel. Three bright colour themes the user can switch between
- * (Lagos, Bright clay, Neon night); one set of shapes, type and components.
- * Every text colour is measured to pass WCAG AA on the surface it sits on,
- * and bright tiles always carry dark text.
- */
+/* Light and dark appearances share typography, spacing and semantic colour roles. */
 
-@custom-variant dark (&:where([data-theme="neon"], [data-theme="neon"] *));
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
   /* Shape: crisp, consistent radii; no bezels, no pills for buttons. */
@@ -22,9 +17,9 @@
   --shell: transparent;
 }
 
-/* Lagos (default): the website's colours. Danfo yellow, flag green, poster red. */
+/* Light (default): the website's colours. Danfo yellow, flag green, poster red. */
 :root,
-[data-theme="lagos"] {
+[data-theme="light"] {
   color-scheme: light;
   --ground: #f6f4ec;
   --core: #ffffff;
@@ -58,43 +53,8 @@
   --tile-warn: #f4b41a;
 }
 
-/* Bright clay: vivid orange and solid colour, on warm peach-white. */
-[data-theme="clay"] {
-  color-scheme: light;
-  --ground: #fff7f2;
-  --core: #ffffff;
-  --sunken: #fff0e7;
-  --field: #ffffff;
-  --shell-ring: #f3d9cb;
-  --line: #f0d5c6;
-  --ink: #1a1410;
-  --ink-soft: #5c4a3f;
-  --ink-faint: #6e5c51;
-  --action: #ff6a2c;
-  --action-ink: #141413;
-  --accent: #c2410c;
-  --accent-soft: #ffe4d6;
-  --ok: #0f7a40;
-  --warn: #8a5a00;
-  --stop: #b42318;
-  --focus: #ff6a2c;
-  --dock: #ffffff;
-  --tag-bg: #fff0e7;
-  --tag-ring: transparent;
-  --pastel-green: #e3f5ea;
-  --pastel-yellow: #fff2cc;
-  --pastel-blue: #e3eef6;
-  --pastel-red: #ffe3df;
-  --core-edge: 0 0 #0000;
-  --ambient: 0 1px 2px rgb(90 40 10 / 0.08);
-  --tile-accent: #ff6a2c;
-  --tile-ok: #1fc37a;
-  --tile-stop: #ff5a4e;
-  --tile-warn: #ffbe2e;
-}
-
-/* Neon night: dark, with saturated orange, mint, pink and yellow. */
-[data-theme="neon"] {
+/* Dark surfaces with the same yellow and green brand accents. */
+[data-theme="dark"] {
   color-scheme: dark;
   --ground: #0f0f12;
   --core: #1a1a20;
@@ -105,14 +65,14 @@
   --ink: #ffffff;
   --ink-soft: #c9c9d1;
   --ink-faint: #a3a3ae;
-  --action: #ff7a1a;
+  --action: #f4b41a;
   --action-ink: #141413;
-  --accent: #ff8a3d;
-  --accent-soft: rgb(255 122 26 / 0.18);
+  --accent: #6ee7a0;
+  --accent-soft: rgb(110 231 160 / 0.12);
   --ok: #2ee59d;
   --warn: #ffd23f;
-  --stop: #ff4d6d;
-  --focus: #ff8a3d;
+  --stop: #ff7887;
+  --focus: #f4b41a;
   --dock: #16161b;
   --tag-bg: #24242c;
   --tag-ring: transparent;
@@ -122,13 +82,13 @@
   --pastel-red: rgb(255 77 109 / 0.14);
   --core-edge: inset 0 1px 0 rgb(255 255 255 / 0.04);
   --ambient: 0 1px 2px rgb(0 0 0 / 0.5);
-  --tile-accent: #ff7a1a;
+  --tile-accent: #f4b41a;
   --tile-ok: #2ee59d;
-  --tile-stop: #ff4d6d;
+  --tile-stop: #ff7887;
   --tile-warn: #ffd23f;
 }
 
-/* Bright tiles always carry dark text (5:1 or better on every tile colour). */
+/* Bright tiles keep their own dark ink in either mode. */
 :root {
   --tile-accent-ink: #141413;
   --tile-ok-ink: #141413;

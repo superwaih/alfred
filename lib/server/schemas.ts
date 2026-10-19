@@ -42,3 +42,7 @@ export const taskBodies = {
     }),
   }),
 } as const;
+
+export const emailBody = z.object({ email });
+export const verifyEmailBody = z.object({ challengeId: z.string().regex(/^[a-f0-9]{64}$/), code: z.string().regex(/^\d{6}$/, "Enter the six-digit code.") });
+export const resetPasswordBody = verifyEmailBody.extend({ password: registerBody.shape.password });

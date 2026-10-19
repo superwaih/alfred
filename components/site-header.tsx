@@ -49,7 +49,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-2 sm:gap-4">
           <ThemeToggle />
           <ActionLink href={INSTALL_URL} size="sm" tone="bg-[var(--h-ink)] text-[var(--h-bg)]">
-            Add to Chrome
+            Add to browser
           </ActionLink>
         </div>
       </div>

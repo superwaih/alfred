@@ -1,4 +1,4 @@
-import { TASK_COST, type AiTask, type TaskInput, type TaskOutput } from "@shared/ai";
+import { type AiTask, type TaskInput, type TaskOutput } from "@shared/ai";
 import { ApiError, runTaskWithCredits } from "./api";
 import { runTaskWithOwnKey } from "./providers";
 import { sessionItem, settingsItem } from "./storage";
@@ -37,8 +37,8 @@ export async function runAi<T extends AiTask>(task: T, input: TaskInput[T]): Pro
     return { output: await runTaskWithOwnKey(settings, task, input), via: "own-key" };
   }
 
-  // The first CV import is free on the server, so try it even on an empty balance.
-  if (session && (session.user.credits >= TASK_COST[task] || task === "parse-cv")) {
+  // Server settings determine prices, including the first free CV import.
+  if (session) {
     try {
       return { output: await runTaskWithCredits(task, input), via: "credits" };
     } catch (error) {

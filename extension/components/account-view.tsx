@@ -11,10 +11,9 @@ import {
   SignOutIcon,
   type Icon,
 } from "@phosphor-icons/react";
-import { OWN_KEY_UNLOCK_COST } from "@shared/ai";
 import { fetchCredits, signOut, startCheckout, unlockOwnKey, type CreditsInfo } from "@/lib/api";
 import { PROVIDER_LABELS } from "@/lib/providers";
-import { DEFAULT_MODELS, sessionItem, settingsItem, themeItem, resolveTheme, type ColorTheme, type Provider, type Settings } from "@/lib/storage";
+import { DEFAULT_MODELS, billingItem, sessionItem, settingsItem, themeItem, resolveTheme, type ColorTheme, type Provider, type Settings } from "@/lib/storage";
 import { useStored } from "@/hooks/use-stored";
 import { Button, controlClass, errorMessage, Eyebrow, IconButton, Notice, SectionTitle, Select, stagger, TextInput, Tray, ViewTitle } from "./ui";
 
@@ -332,7 +331,9 @@ function OwnKeyLocked() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const credits = session?.user.credits ?? 0;
-  const enough = credits >= OWN_KEY_UNLOCK_COST;
+  const [billing] = useStored(billingItem);
+  const unlockCost = billing?.ownKeyUnlockCost;
+  const enough = unlockCost !== undefined && credits >= unlockCost;
 
   async function unlock() {
     setBusy(true);
@@ -351,11 +352,11 @@ function OwnKeyLocked() {
       <SectionTitle>Use your own API key</SectionTitle>
       <Tray core="space-y-3">
         <p className="text-[13px] leading-relaxed text-ink-soft">
-          Prefer to pay an AI provider directly? Unlock once for {OWN_KEY_UNLOCK_COST} credits, then add a DeepSeek, OpenAI, Gemini or
+          Prefer to pay an AI provider directly? Unlock once for {unlockCost ?? "…"} credits, then add a DeepSeek, OpenAI, Gemini or
           other key. Your key stays in this browser.
         </p>
         <Button className="w-full" icon={KeyIcon} disabled={!enough} busy={busy} onClick={() => void unlock()}>
-          Unlock for {OWN_KEY_UNLOCK_COST} credits
+          Unlock for {unlockCost ?? "…"} credits
         </Button>
         {!enough && (
           <p className="text-[12px] leading-relaxed text-ink-soft">
@@ -369,9 +370,8 @@ function OwnKeyLocked() {
 }
 
 const THEMES: { value: ColorTheme; label: string; ground: string; ink: string; dots: string[] }[] = [
-  { value: "lagos", label: "Light", ground: "#f6f4ec", ink: "#1a1a1a", dots: ["#f4b41a", "#1aa85d", "#f2493f"] },
-  { value: "clay", label: "Bright clay", ground: "#fff7f2", ink: "#1a1410", dots: ["#ff6a2c", "#1fc37a", "#ffbe2e"] },
-  { value: "neon", label: "Dark", ground: "#0f0f12", ink: "#ffffff", dots: ["#ff7a1a", "#2ee59d", "#ff4d6d"] },
+  { value: "light", label: "Light", ground: "#f6f4ec", ink: "#1a1a1a", dots: ["#f4b41a", "#1aa85d", "#f2493f"] },
+  { value: "dark", label: "Dark", ground: "#0f0f12", ink: "#ffffff", dots: ["#f4b41a", "#2ee59d", "#ff7887"] },
 ];
 
 function Preferences() {
@@ -401,13 +401,13 @@ function Preferences() {
           >
             <span
               aria-hidden
-              className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_6px_rgb(0_0_0/0.25)] transition-transform duration-500 ease-spring ${marks ? "translate-x-6" : "translate-x-1"}`}
+              className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_6px_rgb(0_0_0/0.25)] transition-transform duration-500 ease-spring ${marks ? "translate-x-5" : "translate-x-0"}`}
             />
           </button>
         </div>
         <div className="space-y-2">
           <p className="text-[12px] font-semibold text-ink-soft">Colour theme</p>
-          <div role="radiogroup" aria-label="Colour theme" className="grid grid-cols-3 gap-2">
+          <div role="radiogroup" aria-label="Colour theme" className="grid grid-cols-2 gap-2">
             {THEMES.map((option) => {
               const active = resolveTheme(theme) === option.value;
               return (

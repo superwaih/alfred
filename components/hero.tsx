@@ -22,12 +22,13 @@ export function Hero() {
             the cover letter.
           </p>
           <p className="mt-5 max-w-[34rem] text-body text-ground-ink">
-            It’s a Chrome extension for people applying to a lot of jobs. On a supported
-            application page it fills every question it can answer from your profile, asks you
-            about the ones it can’t, and leaves the Submit button to you.
+            It’s a browser extension for people applying to a lot of jobs, and it runs in Chrome,
+            Edge, Brave, Arc, Opera or any other browser built on Chromium. On an application page
+            it fills every question it can answer from your profile, asks you about the ones it
+            can’t, and leaves the Submit button to you.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
-            <ActionLink href={INSTALL_URL}>Add to Chrome</ActionLink>
+            <ActionLink href={INSTALL_URL}>Add to your browser</ActionLink>
             <a
               href="#how-it-goes"
               className="text-body font-bold underline decoration-2 underline-offset-[6px] transition-colors hover:text-signal"

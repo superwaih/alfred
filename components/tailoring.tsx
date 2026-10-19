@@ -66,7 +66,7 @@ export function Tailoring() {
             onChange={(event) => setAd(event.target.value)}
             rows={7}
             spellCheck={false}
-            className="mt-4 w-full max-w-[34ch] resize-none rounded-[10px] bg-white/[0.06] p-4 text-[clamp(1.125rem,1.4vw,1.375rem)] leading-snug text-bone outline-none transition-colors focus:bg-white/[0.1]"
+            className="mt-4 w-full max-w-[34ch] resize-none rounded-[10px] bg-white/[0.06] p-4 text-[clamp(1.125rem,1.4vw,1.375rem)] leading-snug text-bone [color-scheme:dark] outline-none transition-colors focus:bg-white/[0.1]"
           />
           <h2
             id="tailoring-title"

@@ -39,7 +39,7 @@
 /* Fixed fields: the same in both themes. */
 :root {
   --danfo: #f4b41a;
-  --coral: #f03d34;
+  --coral: #f0443b;
   --naija: #149a52;
   --night: #1a1a1a;
   --bone: #e7e7e2;
@@ -193,3 +193,10 @@ p, dd, li, figcaption {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* Fixed-colour chapters need focus rings matched to their own surface. */
+[data-chapter="night"] { --focus: var(--danfo); }
+[data-chapter="bone"],
+[data-chapter="danfo"],
+[data-chapter="coral"],
+[data-chapter="naija"] { --focus: var(--night); }

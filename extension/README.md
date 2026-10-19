@@ -43,3 +43,9 @@ To load a production build by hand: `pnpm build`, then in `chrome://extensions` 
 pnpm compile   # type-check
 pnpm build
 ```
+
+## Accounts and email verification
+
+Registration now sends a six-digit email OTP; the account is created after verification. Sign-in still uses email and password. **Forgot password** sends a reset OTP and lets the user choose a new password. Codes expire in ten minutes and can be resent (subject to server rate limits). Password resets sign out existing sessions.
+
+Task prices and the personal-key unlock fee come from the server. The panel refreshes prices when opened, when focused, and every minute while signed in. Install the matching API version when updating this extension.

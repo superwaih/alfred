@@ -1,9 +1,10 @@
+import { MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { resolveTheme, themeItem } from "@/lib/storage";
 import { useStored } from "@/hooks/use-stored";
 
 export function ThemeToggle() {
   const [theme, setTheme] = useStored(themeItem);
-  const dark = resolveTheme(theme) === "neon";
+  const dark = resolveTheme(theme) === "dark";
   const next = dark ? "light" : "dark";
 
   return (
@@ -13,10 +14,9 @@ export function ThemeToggle() {
       aria-label={`Switch to ${next} mode`}
       title={`Switch to ${next} mode`}
       onClick={() => void setTheme(next)}
-      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[var(--r-control)] px-2.5 text-[12px] font-medium text-ink-soft transition-colors duration-200 hover:bg-sunken hover:text-ink disabled:opacity-40"
+      className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-control)] text-ink-soft transition-colors duration-200 hover:bg-sunken hover:text-ink disabled:opacity-40"
     >
-      <span aria-hidden className={`h-3.5 w-3.5 rounded-full border border-current ${dark ? "bg-transparent" : "bg-current"}`} />
-      {dark ? "Light mode" : "Dark mode"}
+      {dark ? <SunIcon aria-hidden className="h-[18px] w-[18px]" /> : <MoonIcon aria-hidden className="h-[18px] w-[18px]" />}
     </button>
   );
 }

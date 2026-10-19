@@ -38,13 +38,13 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
-export async function issueToken(user: Pick<UserDoc, "_id" | "tokenVersion">): Promise<string> {
+export async function issueToken(user: Pick<UserDoc, "_id" | "tokenVersion">, audience = "alfred-extension"): Promise<string> {
   return new SignJWT({ ver: user.tokenVersion })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user._id.toHexString())
     .setIssuedAt()
-    .setExpirationTime(TOKEN_TTL)
-    .setAudience("alfred-extension")
+    .setExpirationTime(audience === "alfred-admin" ? "8h" : TOKEN_TTL)
+    .setAudience(audience)
     .sign(env.authSecret());
 }
 
@@ -54,10 +54,14 @@ export async function requireUser(request: Request): Promise<UserDoc> {
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   if (!token) throw new ApiError(401, "unauthenticated", "Sign in to continue.");
 
+  return userForToken(token, "alfred-extension");
+}
+
+export async function userForToken(token: string, audience: "alfred-extension" | "alfred-admin"): Promise<UserDoc> {
   let subject: string | undefined;
   let version: unknown;
   try {
-    const { payload } = await jwtVerify(token, env.authSecret(), { audience: "alfred-extension" });
+    const { payload } = await jwtVerify(token, env.authSecret(), { audience, algorithms: ["HS256"] });
     subject = payload.sub;
     version = payload.ver;
   } catch {
@@ -69,6 +73,7 @@ export async function requireUser(request: Request): Promise<UserDoc> {
   if (!user || user.tokenVersion !== version) {
     throw new ApiError(401, "invalid_token", "Your session has expired. Sign in again.");
   }
+  if (user.suspended) throw new ApiError(403, "account_suspended", "Your account is suspended. Contact support.");
   return user;
 }
 
@@ -79,5 +84,6 @@ export function publicUser(user: UserDoc) {
     name: user.name,
     credits: user.credits,
     ownKeyUnlocked: Boolean(user.ownKeyUnlocked),
+    emailVerified: Boolean(user.emailVerifiedAt),
   };
 }

@@ -30,7 +30,7 @@ export function ApplicationCard({ fields, note, footer, compact = false, classNa
       data-ui
       className={`rounded-[22px] bg-current/10 p-1.5 ring-1 ring-current/15 ${className}`}
     >
-      <div className="overflow-hidden rounded-[16px] bg-paper text-ink">
+      <div className="overflow-hidden rounded-[16px] bg-paper text-ink [color-scheme:light]">
         <div className="flex items-center gap-2 bg-night px-3.5 py-2.5 text-[13px] text-bone">
           {!compact && <BowTie className="h-2.5 w-auto shrink-0 text-danfo" />}
           <span className="truncate font-bold">{note}</span>

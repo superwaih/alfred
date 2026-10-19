@@ -10,7 +10,7 @@ const chivo = Chivo({
 });
 
 const description =
-  "Alfred is a Chrome extension for job seekers. Save your details once and Alfred fills matching application fields, tailors your CV and drafts a cover letter. You review and submit.";
+  "Alfred is a browser extension for job seekers, for Chrome, Edge, Brave and other Chromium browsers. Save your details once and Alfred fills matching application fields, tailors your CV and drafts a cover letter. You review and submit.";
 
 export const metadata: Metadata = {
   // Set NEXT_PUBLIC_SITE_URL to the production address so share images resolve.

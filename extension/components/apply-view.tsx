@@ -2,23 +2,23 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   ArrowsClockwiseIcon,
   BrowserIcon,
+  CaretDownIcon,
   CheckCircleIcon,
   CrosshairIcon,
   PenNibIcon,
   PaperclipIcon,
   TextboxIcon,
-  UserCircleIcon,
 } from "@phosphor-icons/react";
 import { browser } from "wxt/browser";
 import { coverLetterAsText } from "@shared/ai";
 import type { FieldReport, PageChanged, PageReport } from "@/lib/messages";
 import { runAi } from "@/lib/ai";
 import { profileReady, profileTextFor } from "@/lib/profile-text";
-import { profileItem, resumeFileItem } from "@/lib/storage";
+import { preparedDocsItem, profileItem, resumeFileItem } from "@/lib/storage";
 import { attachCvOnPage, fillActivePage, focusFieldOnPage, PageUnavailable, scanActivePage, setFieldOnPage, type ActivePage } from "@/lib/tab";
 import { useCostLabel } from "@/hooks/use-cost-label";
 import { useStored } from "@/hooks/use-stored";
-import { TailorCard } from "./tailor-card";
+import { JobKit, jobKeyFor } from "./job-kit";
 import { Button, controlClass, errorMessage, Eyebrow, IconButton, Notice, SectionTitle, Skeleton, stagger, Tray, ViewTitle } from "./ui";
 
 const SITE_NAMES: Record<PageReport["site"], string> = {
@@ -28,9 +28,11 @@ const SITE_NAMES: Record<PageReport["site"], string> = {
   generic: "this site",
 };
 
-type Props = { onOpenProfile: () => void; onOpenDocuments: () => void; setupBanner?: ReactNode };
+type Props = { onOpenProfile: () => void; setupBanner?: ReactNode };
 
-export function ApplyView({ onOpenProfile, onOpenDocuments, setupBanner }: Props) {
+const NO_JOB = { title: "", company: "", description: "" };
+
+export function ApplyView({ onOpenProfile, setupBanner }: Props) {
   const [profile] = useStored(profileItem);
   const [resume] = useStored(resumeFileItem);
   const [page, setPage] = useState<ActivePage | null>(null);
@@ -169,80 +171,67 @@ export function ApplyView({ onOpenProfile, onOpenDocuments, setupBanner }: Props
 
       {scanning && !page && !error && !guidance && <LoadingTray />}
       {error && <Notice tone="stop">{error}</Notice>}
-      {guidance && (
+      {(guidance || (report && !report.isApplication && !report.job.title)) && (
         <>
-          <Notice>{guidance}</Notice>
+          {guidance && <Notice>{guidance}</Notice>}
           <HowToUse />
+          <JobKit job={NO_JOB} />
         </>
       )}
 
-      {report && !report.isApplication && (
-        <Notice>
-          This page doesn’t look like an application form. Open the job’s “Apply” page and Alfred will read it. You can still
-          prepare a CV and cover letter for this job in{" "}
-          <button type="button" className="font-semibold text-ink underline decoration-1 underline-offset-2" onClick={onOpenDocuments}>
-            Documents
-          </button>
-          .
-        </Notice>
-      )}
-      {page && report && !report.isApplication && report.job.title && (
-        <TailorCard page={page} onReport={(next) => setPage({ ...page, report: { ...next, job: page.report.job } })} onOpenDocuments={onOpenDocuments} />
+      {report && !report.isApplication && report.job.title && (
+        <>
+          <Notice>When you open this job’s application form, Alfred will fill it. Get your CV and letter ready here first if you like.</Notice>
+          <JobKit job={report.job} defaultOpen />
+        </>
       )}
 
-      {report?.isApplication && !filledOnce && (
+      {report?.isApplication && !filledOnce && page && (
         <div className="space-y-4">
-          <div className="grid grid-cols-[1.25fr_1fr] gap-2">
-            <BentoTile tone="accent" className={`row-span-2 ${stagger(1)}`}>
-              <p className="text-[12px] font-semibold opacity-80">Questions found</p>
-              <p className="mt-auto serif text-[40px] leading-none tabular-nums">{total}</p>
-              <p className="mt-1 text-[12px] text-ink-faint">Alfred fills what your profile answers.</p>
-            </BentoTile>
-            <BentoTile className={stagger(2)}>
-              <p className="flex items-center gap-1.5 text-[12px] font-semibold text-ink-soft">
-                <PaperclipIcon aria-hidden className="h-4 w-4" /> CV file
-              </p>
-              <p className={`mt-1 truncate text-[13px] font-semibold ${resume ? "text-ok" : "text-warn"}`}>
-                {resume ? "Ready to attach" : "Not added yet"}
-              </p>
-            </BentoTile>
-            <BentoTile className={stagger(3)}>
-              <p className="flex items-center gap-1.5 text-[12px] font-semibold text-ink-soft">
-                <UserCircleIcon aria-hidden className="h-4 w-4" /> Profile
-              </p>
-              <p className="mt-1 truncate text-[13px] font-semibold text-ok">{profile.personal.firstName} {profile.personal.lastName}</p>
-            </BentoTile>
-          </div>
-
-          <div className={`rise flex items-center gap-2 ${stagger(4)}`}>
-            <Button size="lg" className="flex-1" icon={TextboxIcon} trailing onClick={fill} busy={filling}>
+          <BentoTile tone="accent" className={stagger(1)}>
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="serif text-[44px] leading-none tabular-nums">{total}</p>
+                <p className="mt-1.5 text-[13px] font-semibold">{total === 1 ? "question" : "questions"} on this form</p>
+              </div>
+              <IconButton icon={ArrowsClockwiseIcon} label="Read the page again" onClick={() => void rescan()} className="ring-current/25 text-inherit hover:bg-black/10 hover:text-inherit" />
+            </div>
+            <Button size="lg" className="mt-4 w-full !bg-[var(--ink)] !text-[var(--core)]" icon={TextboxIcon} trailing onClick={fill} busy={filling}>
               Fill this application
             </Button>
-            <IconButton icon={ArrowsClockwiseIcon} label="Read the page again" onClick={() => void rescan()} className="h-12 w-12" />
-          </div>
-          <p className={`rise text-[12px] leading-relaxed text-ink-faint ${stagger(5)}`}>
-            Alfred leaves anything you’ve already typed alone, won’t guess salary or visa questions, and never presses Submit.
-          </p>
+          </BentoTile>
 
-          <TailorCard page={page!} onReport={(next) => setPage({ ...page!, report: { ...next, job: page!.report.job } })} onOpenDocuments={onOpenDocuments} />
+          <ul className={`rise space-y-1.5 text-[12px] leading-relaxed text-ink-soft ${stagger(2)}`}>
+            <li className="flex items-center gap-2">
+              <PaperclipIcon aria-hidden className={`h-4 w-4 shrink-0 ${resume ? "text-ok" : "text-warn"}`} />
+              {resume ? (
+                <span className="min-w-0 truncate">
+                  Attaches <span className="font-semibold text-ink">{resume.name}</span>
+                </span>
+              ) : report.fields.some((field) => field.key === "resume") ? (
+                <span>
+                  This form wants a CV file.{" "}
+                  <button type="button" className="font-semibold text-ink underline decoration-1 underline-offset-2" onClick={onOpenProfile}>
+                    Add yours
+                  </button>
+                </span>
+              ) : (
+                <span>No CV file saved yet</span>
+              )}
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircleIcon aria-hidden className="h-4 w-4 shrink-0 text-ok" />
+              Leaves your own answers alone, skips salary and visa, never submits.
+            </li>
+          </ul>
 
-          {!resume && report.fields.some((field) => field.key === "resume") && (
-            <Notice tone="warn">
-              This form asks for a CV. Add your CV file in{" "}
-              <button type="button" className="font-semibold text-ink underline decoration-1 underline-offset-2" onClick={onOpenProfile}>
-                Profile
-              </button>{" "}
-              and Alfred will attach it.
-            </Notice>
-          )}
+          <JobKit job={report.job} page={page} onReport={(next) => setPage({ ...page, report: { ...next, job: page.report.job } })} />
         </div>
       )}
 
       {filledOnce && page && report && (
         <>
           <Summary done={groups.done.length} needsYou={groups.needsYou.length} drafts={groups.drafts.length} total={total} />
-
-          <TailorCard page={page} onReport={(next) => setPage({ ...page, report: { ...next, job: page.report.job } })} onOpenDocuments={onOpenDocuments} />
 
           {groups.needsYou.length > 0 && (
             <section className="space-y-3">
@@ -260,7 +249,6 @@ export function ApplyView({ onOpenProfile, onOpenDocuments, setupBanner }: Props
                     onShow={() => void focusFieldOnPage(page, field.id)}
                     onAttach={() => attachTo(field)}
                     onOpenProfile={onOpenProfile}
-                    onOpenDocuments={onOpenDocuments}
                   />
                 ))}
               </ul>
@@ -281,12 +269,20 @@ export function ApplyView({ onOpenProfile, onOpenDocuments, setupBanner }: Props
             </section>
           )}
 
+          <JobKit job={report.job} page={page} onReport={(next) => setPage({ ...page, report: { ...next, job: page.report.job } })} />
+
           {groups.done.length > 0 && (
-            <section className="space-y-3">
-              <SectionTitle tone="ok" count={groups.done.length}>
-                Filled for you
-              </SectionTitle>
-              <Tray as="section" core="p-1.5">
+            <details className="group/done">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
+                <SectionTitle tone="ok" count={groups.done.length}>
+                  Filled for you
+                </SectionTitle>
+                <span className="flex items-center gap-1 text-[12px] font-semibold text-ink-soft">
+                  Review
+                  <CaretDownIcon aria-hidden className="h-3.5 w-3.5 transition-transform duration-300 ease-spring group-open/done:rotate-180" />
+                </span>
+              </summary>
+              <Tray as="section" className="mt-3" core="p-1.5">
                 <ul>
                   {groups.done.map((field) => (
                     <li key={field.id}>
@@ -306,7 +302,7 @@ export function ApplyView({ onOpenProfile, onOpenDocuments, setupBanner }: Props
                   ))}
                 </ul>
               </Tray>
-            </section>
+            </details>
           )}
 
           {groups.kept.length > 0 && (
@@ -316,13 +312,10 @@ export function ApplyView({ onOpenProfile, onOpenDocuments, setupBanner }: Props
             </p>
           )}
 
-          <div className="flex items-center gap-2">
-            <Button tone="quiet" icon={ArrowsClockwiseIcon} onClick={fill} busy={filling}>
-              Fill again
-            </Button>
-          </div>
-
-          <Notice tone="ok">Read the form through on the page, then press its Submit button yourself. Alfred never submits an application.</Notice>
+          <Notice tone="ok">Read the form through on the page, then press its Submit button yourself. Alfred never submits.</Notice>
+          <Button tone="ghost" size="sm" icon={ArrowsClockwiseIcon} onClick={fill} busy={filling}>
+            Fill again
+          </Button>
         </>
       )}
     </div>
@@ -379,7 +372,7 @@ function LoadingTray() {
  */
 function BentoTile({ children, className = "", tone = "plain" }: { children: ReactNode; className?: string; tone?: "plain" | "ok" | "stop" | "warn" | "accent" }) {
   const fill = {
-    plain: "bg-core",
+    plain: "bg-core text-ink",
     ok: "bg-[var(--tile-ok,var(--core))] text-[var(--tile-ok-ink,var(--ink))]",
     stop: "bg-[var(--tile-stop,var(--core))] text-[var(--tile-stop-ink,var(--ink))]",
     warn: "bg-[var(--tile-warn,var(--core))] text-[var(--tile-warn-ink,var(--ink))]",
@@ -397,21 +390,21 @@ function Summary({ done, needsYou, drafts, total }: { done: number; needsYou: nu
   return (
     <div className="grid grid-cols-[1.25fr_1fr] gap-2" aria-label="Fill summary">
       <BentoTile tone="ok" className={`row-span-2 ${stagger(1)}`}>
-        <p className="flex items-center gap-1.5 text-[12px] font-semibold opacity-80">
+        <p className="flex items-center gap-1.5 text-[12px] font-semibold">
           <CheckCircleIcon aria-hidden className="h-4 w-4 text-[var(--tile-ok-num,var(--ok))]" /> Filled
         </p>
         <p className="mt-auto serif text-[40px] leading-none tabular-nums">{done}</p>
-        <p className="mt-1 text-[12px] opacity-80">of {total} questions</p>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuenow={share} aria-valuemin={0} aria-valuemax={100} aria-label="Share of questions filled">
+        <p className="mt-1 text-[12px]">of {total} questions</p>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/15" role="progressbar" aria-valuenow={share} aria-valuemin={0} aria-valuemax={100} aria-label="Share of questions filled">
           <div className="h-full rounded-full bg-[var(--tile-ok-num,var(--ok))] transition-[width] duration-700 ease-spring" style={{ width: `${share}%` }} />
         </div>
       </BentoTile>
       <BentoTile tone={needsYou ? "stop" : "plain"} className={stagger(2)}>
-        <p className="text-[12px] font-semibold opacity-80">Needs you</p>
+        <p className="text-[12px] font-semibold">Needs you</p>
         <p className={`mt-1 text-[24px] font-semibold leading-none tabular-nums ${needsYou ? "text-[var(--tile-stop-num,var(--stop))]" : "text-ink-faint"}`}>{needsYou}</p>
       </BentoTile>
       <BentoTile tone={drafts ? "warn" : "plain"} className={stagger(3)}>
-        <p className="text-[12px] font-semibold opacity-80">Can draft</p>
+        <p className="text-[12px] font-semibold">Can draft</p>
         <p className={`mt-1 text-[24px] font-semibold leading-none tabular-nums ${drafts ? "text-[var(--tile-warn-num,var(--warn))]" : "text-ink-faint"}`}>{drafts}</p>
       </BentoTile>
     </div>
@@ -444,8 +437,7 @@ function NeedsYouItem({
   onShow,
   onAttach,
   onOpenProfile,
-  onOpenDocuments,
-}: ItemProps & { onAttach: () => Promise<boolean>; onOpenProfile: () => void; onOpenDocuments: () => void }) {
+}: ItemProps & { onAttach: () => Promise<boolean>; onOpenProfile: () => void }) {
   const [resume] = useStored(resumeFileItem);
   const [attaching, setAttaching] = useState<"idle" | "busy" | "failed">("idle");
   const [value, setValue] = useState("");
@@ -468,11 +460,7 @@ function NeedsYouItem({
       ) : field.kind === "file" ? (
         field.key === "coverLetter" ? (
           <p className="text-[13px] leading-relaxed text-ink-soft">
-            This form wants a cover letter file. Write one in{" "}
-            <button type="button" className="font-semibold text-ink underline decoration-1 underline-offset-2" onClick={onOpenDocuments}>
-              Documents
-            </button>
-            , save it as a PDF, then attach it on the page.
+            This form wants a cover letter file. Write one under “For this job”, use Save as PDF, then attach it on the page.
           </p>
         ) : resume ? (
           <div className="space-y-2">
@@ -537,6 +525,7 @@ function NeedsYouItem({
 
 function DraftItem({ field, index, page, onPut, onShow }: ItemProps & { page: PageReport }) {
   const [profile] = useStored(profileItem);
+  const [docs] = useStored(preparedDocsItem);
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -544,6 +533,15 @@ function DraftItem({ field, index, page, onPut, onShow }: ItemProps & { page: Pa
   const [placed, setPlaced] = useState(false);
   const isCoverLetter = field.key === "coverLetter";
   const cost = useCostLabel(isCoverLetter ? "cover-letter" : "answer");
+  const written = isCoverLetter && docs?.letter && docs.jobKey === jobKeyFor(page.job.company, page.job.title) ? docs.letter : null;
+
+  // A letter already written for this job is the starting point, at no cost.
+  useEffect(() => {
+    if (written && !draft) {
+      setDraft(coverLetterAsText(written));
+      setNote("The letter you prepared for this job. Edit it here if you like.");
+    }
+  }, [written]);
 
   async function write() {
     if (!profile) return;
