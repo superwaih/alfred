@@ -12,6 +12,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import { fetchCredits, signOut, startCheckout, unlockOwnKey, type CreditsInfo } from "@/lib/api";
+import { OWN_KEY_UNLOCK_COST } from "@shared/ai";
 import { PROVIDER_LABELS } from "@/lib/providers";
 import { DEFAULT_MODELS, billingItem, sessionItem, settingsItem, themeItem, resolveTheme, type ColorTheme, type Provider, type Settings } from "@/lib/storage";
 import { useStored } from "@/hooks/use-stored";
@@ -332,8 +333,8 @@ function OwnKeyLocked() {
   const [error, setError] = useState("");
   const credits = session?.user.credits ?? 0;
   const [billing] = useStored(billingItem);
-  const unlockCost = billing?.ownKeyUnlockCost;
-  const enough = unlockCost !== undefined && credits >= unlockCost;
+  const unlockCost = billing?.ownKeyUnlockCost ?? OWN_KEY_UNLOCK_COST;
+  const enough = credits >= unlockCost;
 
   async function unlock() {
     setBusy(true);
@@ -352,11 +353,11 @@ function OwnKeyLocked() {
       <SectionTitle>Use your own API key</SectionTitle>
       <Tray core="space-y-3">
         <p className="text-[13px] leading-relaxed text-ink-soft">
-          Prefer to pay an AI provider directly? Unlock once for {unlockCost ?? "…"} credits, then add a DeepSeek, OpenAI, Gemini or
+          Prefer to pay an AI provider directly? Unlock once for {unlockCost} credits, then add a DeepSeek, OpenAI, Gemini or
           other key. Your key stays in this browser.
         </p>
         <Button className="w-full" icon={KeyIcon} disabled={!enough} busy={busy} onClick={() => void unlock()}>
-          Unlock for {unlockCost ?? "…"} credits
+          Unlock for {unlockCost} credits
         </Button>
         {!enough && (
           <p className="text-[12px] leading-relaxed text-ink-soft">

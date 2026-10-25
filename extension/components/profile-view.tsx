@@ -3,8 +3,8 @@ import { emptyProfile, type EducationEntry, type Profile, type Stance, type Work
 import { formatUrl } from "@shared/url";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { CvTray } from "./cv-tray";
-import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
-import { Button, Eyebrow, Select, stagger, TextArea, TextInput, ViewTitle } from "./ui";
+import { CaretDownIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
+import { Button, Select, stagger, TextArea, TextInput } from "./ui";
 
 export function uid() {
   return crypto.randomUUID();
@@ -22,12 +22,10 @@ export function ProfileView({ setupBanner }: { setupBanner?: ReactNode }) {
 
   return (
     <div className="space-y-4 px-5 pt-6">
-      <ViewTitle
-        className="pb-3"
-        eyebrow={<Eyebrow>Profile · saved as you type</Eyebrow>}
-        title="Told once. Used everywhere."
-        sub="Your profile stays in this browser. Alfred only sends the parts a task needs to the AI that runs it."
-      />
+      <div className="rise flex items-end justify-between gap-3 pb-1">
+        <h1 className="serif text-[26px] leading-none">Your profile</h1>
+        <p className="text-[11px] text-ink-faint">Saved as you type · kept in this browser</p>
+      </div>
 
       {setupBanner}
       <CvTray profile={profile} update={update} />
@@ -195,9 +193,7 @@ function Section({ title, open = false, children }: { title: string; open?: bool
     <details open={open} className={`rise group rounded-[var(--r-card)] bg-shell p-[var(--bezel)] ring-1 ring-shell-ring ${stagger(3)}`}>
       <summary className="flex cursor-pointer list-none items-center justify-between rounded-[var(--r-card)] px-4 py-3.5 text-[15px] font-semibold tracking-[-0.02em] transition-colors duration-300 group-open:rounded-b-none group-open:bg-core [&::-webkit-details-marker]:hidden">
         {title}
-        <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full bg-field ring-1 ring-line transition-transform duration-500 ease-spring group-open:rotate-45">
-          <PlusIcon className="h-3.5 w-3.5" />
-        </span>
+        <CaretDownIcon aria-hidden className="h-4 w-4 text-ink-soft transition-transform duration-500 ease-spring group-open:rotate-180" />
       </summary>
       <div className="space-y-4 rounded-b-[18px] bg-core px-4 pb-5 pt-1 shadow-core">{children}</div>
     </details>

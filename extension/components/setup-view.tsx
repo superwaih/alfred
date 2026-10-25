@@ -33,7 +33,12 @@ export function SetupView({ onFinish }: Props) {
 
   return (
     <div className="min-h-dvh space-y-6 px-6 pb-10 pt-8">
-      <h1 className="rise serif text-[30px]">{hasCv ? `Here’s what we found${firstName ? `, ${firstName}` : ""}.` : "Add your CV"}</h1>
+      <div className="rise space-y-2">
+        <h1 className="serif text-[30px]">{hasCv ? `Here’s what we found${firstName ? `, ${firstName}` : ""}.` : "Add your CV"}</h1>
+        <p className="text-[13px] leading-relaxed text-ink-soft">
+          {hasCv ? "Check these, then you’re ready. Everything else lives in Profile." : "Alfred reads it to fill in your profile. It takes a few seconds."}
+        </p>
+      </div>
 
       <div className={`rise rounded-[12px] border border-[var(--shell-ring)] bg-core p-4 ${stagger(1)}`}>
         <CvTray bare profile={profile} update={update} />
@@ -68,9 +73,12 @@ export function SetupView({ onFinish }: Props) {
       )}
 
       <div className={`rise space-y-3 ${stagger(3)}`}>
-        <Button size="lg" className="w-full" trailing={ArrowRightIcon} disabled={!hasCv || !ready} onClick={() => finish(false)}>
-          Start applying
-        </Button>
+        {hasCv && (
+          <Button size="lg" className="w-full" trailing={ArrowRightIcon} disabled={!ready} onClick={() => finish(false)}>
+            Start applying
+          </Button>
+        )}
+        {hasCv && !ready && <p className="text-center text-[12px] text-ink-soft">Add your first name and email to continue.</p>}
         <button type="button" onClick={() => finish(true)} className="mx-auto block text-[13px] font-medium text-ink-soft hover:text-ink">
           Skip for now
         </button>

@@ -10,13 +10,13 @@ import {
   TextboxIcon,
 } from "@phosphor-icons/react";
 import { browser } from "wxt/browser";
-import { coverLetterAsText } from "@shared/ai";
+import { coverLetterAsText, type CoverLetter } from "@shared/ai";
 import type { FieldReport, PageChanged, PageReport } from "@/lib/messages";
 import { runAi } from "@/lib/ai";
 import { profileReady, profileTextFor } from "@/lib/profile-text";
 import { preparedDocsItem, profileItem, resumeFileItem } from "@/lib/storage";
 import { attachCvOnPage, fillActivePage, focusFieldOnPage, PageUnavailable, scanActivePage, setFieldOnPage, type ActivePage } from "@/lib/tab";
-import { useCostLabel } from "@/hooks/use-cost-label";
+import { useCostLabel, useCostTotal } from "@/hooks/use-cost-label";
 import { useStored } from "@/hooks/use-stored";
 import { JobKit, jobKeyFor } from "./job-kit";
 import { Button, controlClass, errorMessage, Eyebrow, IconButton, Notice, SectionTitle, Skeleton, stagger, Tray, ViewTitle } from "./ui";
@@ -32,6 +32,9 @@ type Props = { onOpenProfile: () => void; setupBanner?: ReactNode };
 
 const NO_JOB = { title: "", company: "", description: "" };
 
+/** Statuses only a Fill produces; attaching a file on its own doesn't count. */
+const FILL_RESULTS = new Set<FieldReport["status"]>(["filled", "needs-you", "draftable"]);
+
 export function ApplyView({ onOpenProfile, setupBanner }: Props) {
   const [profile] = useStored(profileItem);
   const [resume] = useStored(resumeFileItem);
@@ -40,7 +43,6 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
   const [guidance, setGuidance] = useState("");
   const [scanning, setScanning] = useState(true);
   const [filling, setFilling] = useState(false);
-  const [filledOnce, setFilledOnce] = useState(false);
   const pageRef = useRef<ActivePage | null>(null);
   pageRef.current = page;
 
@@ -67,10 +69,7 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
   // Rescan when the user switches tabs, a page loads, or a multi-step form moves on.
   useEffect(() => {
     void rescan();
-    const onActivated = () => {
-      setFilledOnce(false);
-      void rescan();
-    };
+    const onActivated = () => void rescan();
     const onUpdated = (_id: number, info: { status?: string }) => {
       if (info.status === "complete") void rescan();
     };
@@ -93,7 +92,6 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
     try {
       const report = await fillActivePage(page);
       setPage({ ...page, report });
-      setFilledOnce(true);
       setError("");
     } catch (err) {
       setError(errorMessage(err));
@@ -118,6 +116,9 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
     return Boolean(report?.fields.find((candidate) => candidate.id === field.id && candidate.status === "filled"));
   }
 
+  const [docs, setDocs] = useStored(preparedDocsItem);
+  const [draftSignal, setDraftSignal] = useState(0);
+
   const groups = useMemo(() => {
     const fields = page?.report.fields ?? [];
     return {
@@ -130,6 +131,13 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
   }, [page]);
 
   if (!profile) return null;
+
+  // Answers still to write; a cover letter already prepared for this job doesn't need writing.
+  const letterReady = Boolean(page && docs?.letter && docs.jobKey === jobKeyFor(page.report.job.company, page.report.job.title));
+  const toDraft = groups.drafts.filter((field) => !(field.key === "coverLetter" && letterReady));
+
+  // The page remembers what Alfred did to it, so this survives tab switches and reopening the panel.
+  const filledOnce = Boolean(page?.report.fields.some((field) => FILL_RESULTS.has(field.status)));
 
   if (!profileReady(profile)) {
     return (
@@ -221,7 +229,7 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
             </li>
             <li className="flex items-center gap-2">
               <CheckCircleIcon aria-hidden className="h-4 w-4 shrink-0 text-ok" />
-              Leaves your own answers alone, skips salary and visa, never submits.
+              Keeps anything you’ve typed, asks you when it isn’t sure, never submits.
             </li>
           </ul>
 
@@ -257,13 +265,36 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
 
           {groups.drafts.length > 0 && (
             <section className="space-y-3">
-              <SectionTitle tone="warn" count={groups.drafts.length}>
+              <SectionTitle
+                tone="warn"
+                count={groups.drafts.length}
+                aside={toDraft.length > 1 ? <DraftAllButton fields={toDraft} onClick={() => setDraftSignal((n) => n + 1)} /> : undefined}
+              >
                 Free-text answers
               </SectionTitle>
               <p className="text-[13px] text-ink-soft">Alfred can draft these from your profile. Every draft is yours to edit first.</p>
               <ul className="space-y-2.5">
                 {groups.drafts.map((field, index) => (
-                  <DraftItem key={field.id} index={index} field={field} page={report} onPut={putValue} onShow={() => void focusFieldOnPage(page, field.id)} />
+                  <DraftItem
+                    key={field.id}
+                    index={index}
+                    field={field}
+                    page={report}
+                    draftSignal={draftSignal}
+                    onLetter={(letter) =>
+                      void setDocs({
+                        jobKey: jobKeyFor(report.job.company, report.job.title),
+                        jobTitle: report.job.title,
+                        company: report.job.company,
+                        jobDescription: report.job.description,
+                        cv: docs?.jobKey === jobKeyFor(report.job.company, report.job.title) ? docs.cv : null,
+                        letter,
+                        updatedAt: new Date().toISOString(),
+                      })
+                    }
+                    onPut={putValue}
+                    onShow={() => void focusFieldOnPage(page, field.id)}
+                  />
                 ))}
               </ul>
             </section>
@@ -523,7 +554,24 @@ function NeedsYouItem({
   );
 }
 
-function DraftItem({ field, index, page, onPut, onShow }: ItemProps & { page: PageReport }) {
+function DraftAllButton({ fields, onClick }: { fields: FieldReport[]; onClick: () => void }) {
+  const cost = useCostTotal(fields.map((field) => (field.key === "coverLetter" ? "cover-letter" : "answer")));
+  return (
+    <Button size="sm" tone="quiet" icon={PenNibIcon} onClick={onClick}>
+      Draft all{cost}
+    </Button>
+  );
+}
+
+function DraftItem({
+  field,
+  index,
+  page,
+  draftSignal,
+  onLetter,
+  onPut,
+  onShow,
+}: ItemProps & { page: PageReport; draftSignal: number; onLetter: (letter: CoverLetter) => void }) {
   const [profile] = useStored(profileItem);
   const [docs] = useStored(preparedDocsItem);
   const [draft, setDraft] = useState("");
@@ -543,6 +591,11 @@ function DraftItem({ field, index, page, onPut, onShow }: ItemProps & { page: Pa
     }
   }, [written]);
 
+  // "Draft all" asks every item that has nothing yet.
+  useEffect(() => {
+    if (draftSignal && !draft && !busy) void write();
+  }, [draftSignal]);
+
   async function write() {
     if (!profile) return;
     setBusy(true);
@@ -551,6 +604,7 @@ function DraftItem({ field, index, page, onPut, onShow }: ItemProps & { page: Pa
       const job = { jobDescription: page.job.description, jobTitle: page.job.title, company: page.job.company };
       if (isCoverLetter) {
         const { output } = await runAi("cover-letter", { ...job, profileText: profileTextFor(profile) });
+        onLetter(output);
         setDraft(coverLetterAsText(output));
         setNote("A draft written from your profile. Make it sound like you.");
       } else {
