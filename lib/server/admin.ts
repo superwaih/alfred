@@ -18,9 +18,21 @@ export function isAdmin(user: UserDoc) {
   return Boolean(user.emailVerifiedAt && !user.suspended && (isOwner(user) || user.role === "admin"));
 }
 
+/** True when two addresses are the same site, treating the bare domain and www. as one. */
+function sameSite(origin: string | null, site: string) {
+  if (!origin) return false;
+  try {
+    const a = new URL(origin), b = new URL(site);
+    const host = (url: URL) => url.host.replace(/^www\./, "");
+    return a.protocol === b.protocol && host(a) === host(b);
+  } catch {
+    return false;
+  }
+}
+
 /** Cookie-authenticated writes only accept this site's origin (including login). */
 export function assertAdminOrigin(request: Request) {
-  if (request.headers.get("origin") !== new URL(env.siteUrl()).origin) {
+  if (!sameSite(request.headers.get("origin"), env.siteUrl())) {
     throw new ApiError(403, "invalid_origin", "This action must be made from the Alfred admin page.");
   }
 }
