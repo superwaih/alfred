@@ -1,5 +1,5 @@
 import "server-only";
-import { MongoServerError, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { ledger, users, type LedgerReason } from "./db";
 import { ApiError } from "./http";
 
@@ -14,7 +14,7 @@ export async function debit(userId: ObjectId, amount: number, task: string): Pro
     { returnDocument: "after" },
   );
   if (!updated) {
-    throw new ApiError(402, "insufficient_credits", "You're out of credits. Buy more, or add your own API key in Settings.");
+    throw new ApiError(402, "insufficient_credits", "You're out of credits. Add your own API key in Account to keep using AI.");
   }
   await record(userId, -amount, "task", { task });
   return updated.credits;
@@ -24,21 +24,6 @@ export async function debit(userId: ObjectId, amount: number, task: string): Pro
 export async function refund(userId: ObjectId, amount: number, task: string): Promise<void> {
   await (await users()).updateOne({ _id: userId }, { $inc: { credits: amount } });
   await record(userId, amount, "refund", { task });
-}
-
-/**
- * Grants purchased credits once per Polar order. The unique index on orderId
- * makes a retried webhook a no-op. Returns false if already granted.
- */
-export async function grantPurchase(userId: ObjectId, amount: number, orderId: string): Promise<boolean> {
-  try {
-    await record(userId, amount, "purchase", { orderId });
-  } catch (error) {
-    if (error instanceof MongoServerError && error.code === 11000) return false;
-    throw error;
-  }
-  await (await users()).updateOne({ _id: userId }, { $inc: { credits: amount } });
-  return true;
 }
 
 async function record(
@@ -68,7 +53,7 @@ export async function unlockOwnKey(userId: ObjectId, cost: number): Promise<{ cr
   }
   const current = await collection.findOne({ _id: userId });
   if (current?.ownKeyUnlocked) return { credits: current.credits, charged: 0 };
-  throw new ApiError(402, "insufficient_credits", `Unlocking your own API key costs ${cost} credits. Buy credits to continue.`);
+  throw new ApiError(402, "insufficient_credits", `Unlocking your own API key costs ${cost} credits.`);
 }
 
 /** Records a task that cost nothing, so the free CV import is used up only once it succeeds. */

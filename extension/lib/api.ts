@@ -81,7 +81,6 @@ export type CreditsInfo = {
   freeCvImport: boolean;
   ownKeyUnlocked: boolean;
   ownKeyUnlockCost: number;
-  packs: { id: string; credits: number; label: string; price: string }[];
   history: { delta: number; reason: string; task: string | null; createdAt: string }[];
 };
 
@@ -101,14 +100,6 @@ export async function unlockOwnKey(): Promise<void> {
   const { user } = await request<{ user: Session["user"] }>("/own-key/unlock", { method: "POST" });
   const session = await sessionItem.getValue();
   if (session) await sessionItem.setValue({ ...session, user });
-}
-
-export async function startCheckout(packId: string): Promise<string> {
-  const { url } = await request<{ url: string }>("/credits/checkout", {
-    method: "POST",
-    body: JSON.stringify({ packId }),
-  });
-  return url;
 }
 
 export async function runTaskWithCredits<T extends AiTask>(task: T, input: TaskInput[T]): Promise<TaskOutput[T]> {

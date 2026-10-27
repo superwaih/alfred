@@ -40,7 +40,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
     body: (
       <ul>
         <li>Your account: name, email address, a scrypt hash of your password, whether you verified your email, and when you last signed in.</li>
-        <li>Your credit balance and a ledger of each change: purchases, refunds and which kind of AI task used credits.</li>
+        <li>Your credit balance and a ledger of each change: starter credits, refunds, admin adjustments and which kind of AI task used credits.</li>
         <li>An activity log of sign-ins and AI tasks (the task name and whether it worked, never its content).</li>
         <li>Short-lived sign-in codes and rate-limit counters, which delete themselves.</li>
       </ul>
@@ -78,7 +78,6 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "Other services",
     body: (
       <ul>
-        <li>Polar handles credit purchases. Alfred never sees your card details; it receives the order and the credits bought.</li>
         <li>Resend delivers sign-in and password-reset codes to your email address.</li>
         <li>A MongoDB database host stores the account data listed above.</li>
       </ul>

@@ -14,10 +14,6 @@ export const loginBody = z.object({
   password: z.string().min(1).max(200),
 });
 
-export const checkoutBody = z.object({
-  packId: z.string().min(1).max(64),
-});
-
 const job = {
   jobDescription: z.string().max(20000, { message: "That job description is too long (20,000 characters at most)." }).default(""),
   jobTitle: z.string().max(200).optional(),

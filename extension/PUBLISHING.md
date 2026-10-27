@@ -16,9 +16,6 @@ with production values:
 - `NEXT_PUBLIC_SITE_URL` / `APP_URL`: the real site, e.g. `https://alfreed.space`
 - `MONGODB_URI`, `AUTH_SECRET` (a new long secret, not the local one), `DEEPSEEK_API_KEY`
 - `RESEND_API_KEY`, `EMAIL_FROM` (a sending domain verified in Resend), `ADMIN_EMAIL`
-- Polar: `POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET`, `POLAR_CREDIT_PACKS`,
-  `POLAR_ENVIRONMENT=production`, and point Polar's webhook at
-  `https://<site>/api/v1/webhooks/polar`
 - `EXTENSION_ORIGINS`: fill in after step 4
 
 Check `https://<site>/privacy` loads: the store asks for it.

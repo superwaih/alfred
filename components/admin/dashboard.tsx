@@ -9,12 +9,11 @@ import {
   BrainIcon,
   CheckIcon,
   CoinsIcon,
-  CreditCardIcon,
   EnvelopeSimpleIcon,
   LockSimpleIcon,
   MagnifyingGlassIcon,
   PulseIcon,
-  ShoppingBagIcon,
+  ReceiptIcon,
   SignOutIcon,
   SlidersHorizontalIcon,
   SparkleIcon,
@@ -199,7 +198,6 @@ function Overview({ data, onOpen }: { data: AdminSnapshot; onOpen: (tab: Tab) =>
   const services: { key: keyof AdminSnapshot["services"]; label: string; icon: Icon }[] = [
     { key: "email", label: "Email (Resend)", icon: EnvelopeSimpleIcon },
     { key: "ai", label: "AI (DeepSeek)", icon: BrainIcon },
-    { key: "payments", label: "Payments (Polar)", icon: CreditCardIcon },
   ];
 
   return (
@@ -238,10 +236,10 @@ function Overview({ data, onOpen }: { data: AdminSnapshot; onOpen: (tab: Tab) =>
         </article>
         <article className="adm-tile paper adm-rise" style={{ ["--i" as string]: 4 }}>
           <div className="adm-tile-label">
-            Credits sold <ShoppingBagIcon aria-hidden weight="bold" />
+            Credits spent <ReceiptIcon aria-hidden weight="bold" />
           </div>
-          <strong>{formatNumber(m.purchasedCredits)}</strong>
-          <p className="adm-tile-note">All-time purchases</p>
+          <strong>{formatNumber(m.creditsSpent)}</strong>
+          <p className="adm-tile-note">On AI tasks, all time</p>
         </article>
       </section>
 
@@ -854,7 +852,7 @@ function Activity({ data }: { data: AdminSnapshot }) {
           <div className="adm-empty">
             <CoinsIcon aria-hidden />
             <strong>No credit movements yet</strong>
-            Starter credits, purchases and AI tasks will appear here.
+            Starter credits, AI tasks and admin adjustments will appear here.
           </div>
         )}
       </section>
@@ -955,7 +953,7 @@ function Settings({ initial, onSaved }: { initial: AppSettings; onSaved: (settin
           )}
         </div>
         <p className="soft" style={{ fontSize: 12, marginTop: 18, maxWidth: "64ch" }}>
-          Each account’s first CV import is always free. Credit pack prices live in Polar.
+          Each account’s first CV import is always free. To give someone more credits, use Adjust credits on their account.
         </p>
       </section>
 

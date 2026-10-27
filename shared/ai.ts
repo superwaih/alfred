@@ -6,8 +6,11 @@
 
 export type AiTask = "tailor-cv" | "cover-letter" | "answer" | "parse-cv";
 
-/** One-time credits to unlock using your own API key (per account). */
-export const OWN_KEY_UNLOCK_COST = 5;
+/**
+ * One-time credits to unlock using your own API key (per account). Free while
+ * Alfred has no way to buy credits; admins can set a price in Settings.
+ */
+export const OWN_KEY_UNLOCK_COST = 0;
 
 /** Credits charged per task in credits mode. Own-key mode is never charged. */
 export const TASK_COST: Record<AiTask, number> = {

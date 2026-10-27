@@ -24,9 +24,9 @@ export type AdminUser = {
 
 export type AdminSnapshot = {
   viewer: AdminUser;
-  metrics: { users: number; suspended: number; verified: number; credits: number; tasksToday: number; failuresToday: number; purchasedCredits: number };
+  metrics: { users: number; suspended: number; verified: number; credits: number; tasksToday: number; failuresToday: number; creditsSpent: number };
   settings: AppSettings;
-  services: { email: boolean; ai: boolean; payments: boolean };
+  services: { email: boolean; ai: boolean };
   activity: { id: string; action: string; actor: string; target: string; detail: string; createdAt: string }[];
   ledger: { id: string; email: string; delta: number; reason: string; task: string | null; createdAt: string }[];
 };

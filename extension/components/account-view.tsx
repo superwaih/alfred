@@ -11,7 +11,7 @@ import {
   SignOutIcon,
   type Icon,
 } from "@phosphor-icons/react";
-import { fetchCredits, signOut, startCheckout, unlockOwnKey, type CreditsInfo } from "@/lib/api";
+import { fetchCredits, signOut, unlockOwnKey, type CreditsInfo } from "@/lib/api";
 import { OWN_KEY_UNLOCK_COST } from "@shared/ai";
 import { PROVIDER_LABELS } from "@/lib/providers";
 import { DEFAULT_MODELS, billingItem, sessionItem, settingsItem, themeItem, resolveTheme, type ColorTheme, type Provider, type Settings } from "@/lib/storage";
@@ -104,17 +104,6 @@ function Credits() {
     void refresh();
   }, [refresh]);
 
-  async function buy(packId: string) {
-    setBusy(packId);
-    try {
-      await browser.tabs.create({ url: await startCheckout(packId) });
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy("");
-    }
-  }
-
   const credits = info?.credits ?? session?.user.credits ?? 0;
 
   return (
@@ -155,26 +144,6 @@ function Credits() {
       </Tray>
 
       {error && <Notice tone="stop">{error}</Notice>}
-
-      {info && info.packs.length > 0 && (
-        <div className={`rise space-y-2.5 pt-2 ${stagger(2)}`}>
-          <SectionTitle>Buy credits</SectionTitle>
-          <ul className="space-y-2">
-            {info.packs.map((pack) => (
-              <Tray key={pack.id} as="li" core="flex items-center justify-between gap-3 py-3">
-                <span>
-                  <span className="block text-[15px] font-semibold tracking-[-0.02em]">{pack.label}</span>
-                  <span className="text-[12px] text-ink-soft">{pack.price}</span>
-                </span>
-                <Button size="sm" trailing onClick={() => void buy(pack.id)} busy={busy === pack.id}>
-                  Buy
-                </Button>
-              </Tray>
-            ))}
-          </ul>
-          <p className="px-1 text-[12px] leading-relaxed text-ink-faint">Payments are handled by Polar in a new tab. Refresh when you’re back.</p>
-        </div>
-      )}
 
       {info && info.history.length > 0 && (
         <details className="group rounded-[var(--r-card)] bg-shell p-[var(--bezel)] ring-1 ring-shell-ring">
@@ -361,7 +330,7 @@ function OwnKeyLocked() {
         </Button>
         {!enough && (
           <p className="text-[12px] leading-relaxed text-ink-soft">
-            You have {credits} {credits === 1 ? "credit" : "credits"}. Buy credits above to unlock it.
+            It costs {unlockCost} credits and you have {credits}.
           </p>
         )}
         {error && <Notice tone="stop">{error}</Notice>}

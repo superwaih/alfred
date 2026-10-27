@@ -29,7 +29,7 @@ export type LedgerDoc = {
   task?: string;
   note?: string;
   actorId?: ObjectId;
-  /** Polar order id for purchases; unique, so a webhook retry can't grant twice. */
+  /** Unique per order or admin request, so a retry can't grant twice. */
   orderId?: string;
   createdAt: Date;
 };

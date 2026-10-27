@@ -12,7 +12,7 @@ export class NoAiAvailable extends Error {
       reason === "signed-out"
         ? "Sign in to use Alfred's credits."
         : reason === "out-of-credits"
-          ? "You're out of credits. Buy more, or unlock your own API key in Account."
+          ? "You're out of credits. Add your own API key in Account to keep using AI."
           : reason === "locked"
             ? "Using your own API key needs a one-time unlock in Account."
             : "Add your own API key in Account, or switch back to Alfred credits.",
