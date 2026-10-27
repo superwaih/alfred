@@ -77,12 +77,10 @@ export function AdminDashboard() {
   useEffect(() => {
     void load();
   }, [load]);
-
   const refresh = () => {
     setLoading(true);
     void load();
   };
-
   // Keeps "Updated 2 minutes ago" honest.
   useEffect(() => {
     const timer = setInterval(() => tick((n) => n + 1), 30000);
@@ -127,7 +125,7 @@ export function AdminDashboard() {
   return (
     <div className="adm">
       <a className="adm-skip" href="#adm-main">
-        Skip to content
+        Skip to conten
       </a>
       <header className="adm-top">
         <div className="adm-frame adm-top-row">
