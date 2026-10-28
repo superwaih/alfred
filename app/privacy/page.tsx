@@ -50,8 +50,8 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "What the extension reads on web pages",
     body: (
       <p>
-        Alfred can run on any site so it works on any careers page, but it only reads a page when you open its side
-        panel there. It reads the form’s questions and the job’s title, company and description, so it can match them
+        Alfred asks your permission for each site the first time you use it there, and only reads a page when you open
+        its side panel on it. You can remove a site at any time from your browser’s extension settings. It reads the form’s questions and the job’s title, company and description, so it can match them
         to your profile. Page content is sent off your device only when you ask for an AI task, and then only the job
         details that task needs.
       </p>

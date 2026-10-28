@@ -1,6 +1,9 @@
 import type { FieldKey } from "@shared/fields";
 import type { JobInfo, SiteKind } from "../messages";
 
+/** Application platforms that embed their forms in iframes on company sites. */
+export const FORM_HOSTS = /(^|\.)(greenhouse\.io|lever\.co|myworkdayjobs\.com|myworkday\.com|ashbyhq\.com|smartrecruiters\.com|workable\.com|recruitee\.com|bamboohr\.com|jobvite\.com|icims\.com|teamtailor\.com|personio\.(de|com))$/;
+
 export function detectSite(url: URL, doc: Document): SiteKind {
   const host = url.hostname;
   if (/(^|\.)greenhouse\.io$/.test(host) || doc.querySelector("#grnhse_app, form#application-form[action*='greenhouse']")) {

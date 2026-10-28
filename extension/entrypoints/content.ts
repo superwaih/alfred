@@ -5,6 +5,8 @@ import { profileItem, resumeFileItem, settingsItem } from "@/lib/storage";
 
 export default defineContentScript({
   matches: ["<all_urls>"],
+  // Not declared in the manifest: lib/tab.ts injects it into sites the user has allowed.
+  registration: "runtime",
   // Greenhouse and others embed application forms in iframes on company sites.
   allFrames: true,
   runAt: "document_idle",

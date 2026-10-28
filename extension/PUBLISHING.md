@@ -24,7 +24,7 @@ Check `https://<site>/privacy` loads: the store asks for it.
 
 ```bash
 cd extension
-echo "WXT_API_URL=https://alfreed.space" > .env.production
+echo "WXT_API_URL=https://www.alfreed.space" > .env.production   # the exact host; a redirect breaks CORS
 pnpm zip
 ```
 
@@ -73,7 +73,9 @@ store rejects a version it has already seen.
   - `sidePanel`: *Alfred's interface is a side panel shown beside the application form the user is filling in.*
   - `tabs`: *Finds the tab the user is applying in so Alfred can read that form, and reacts when the user switches tabs.*
   - `webNavigation`: *Lists the frames in the current tab, because many application forms (Greenhouse, Workday) are embedded in iframes.*
-  - Host permission `<all_urls>`: *Job applications are hosted on thousands of company career sites and applicant tracking systems, so Alfred must be able to read and fill forms on whichever site the user is applying on. It reads a page only when the user opens Alfred there, and also calls Alfred's own API and, if the user adds a key, their chosen AI provider.*
+  - `scripting`: *Loads Alfred's form reader into a job site only after the user has allowed that site, so nothing runs on sites they haven't approved.*
+  - Host permissions (api.anthropic.com, api.deepseek.com, api.openai.com, generativelanguage.googleapis.com): *Used only when the user adds their own API key for that AI provider, to send the AI request they asked for.*
+  - Optional host permissions (`https://*/*`, `http://*/*`): *Nothing is granted at install. Job applications live on thousands of different company and applicant-tracking sites, so the first time the user opens Alfred on one, Alfred asks for that single site with the browser's permission prompt. The user can remove a site at any time from the extension's settings.*
 - Remote code: **No, I am not using remote code.**
 - Data usage: tick *Personally identifiable information* (name, email, CV
   details), *Authentication information* (password at sign-in), *Website
@@ -87,8 +89,9 @@ store build with a few people first).
 
 ## 6. Submit for review
 
-Press **Submit for review**. Because of `<all_urls>`, expect an in-depth review:
-usually a few days, occasionally longer. If it's rejected, the email names the
+Press **Submit for review**. Alfred asks for each site at runtime rather than
+requesting all sites at install, so it avoids the broad-host-permission
+in-depth review. Reviews usually take a few days. If it's rejected, the email names the
 policy; fix that and resubmit with a bumped version.
 
 When it's live, copy the listing URL into `INSTALL_URL` in `lib/site.ts` and

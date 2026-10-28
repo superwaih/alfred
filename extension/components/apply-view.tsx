@@ -15,7 +15,18 @@ import type { FieldReport, PageChanged, PageReport } from "@/lib/messages";
 import { runAi } from "@/lib/ai";
 import { profileReady, profileTextFor } from "@/lib/profile-text";
 import { preparedDocsItem, profileItem, resumeFileItem } from "@/lib/storage";
-import { attachCvOnPage, fillActivePage, focusFieldOnPage, PageUnavailable, scanActivePage, setFieldOnPage, type ActivePage } from "@/lib/tab";
+import {
+  attachCvOnPage,
+  fillActivePage,
+  focusFieldOnPage,
+  NeedsAccess,
+  PageUnavailable,
+  requestAccess,
+  scanActivePage,
+  setFieldOnPage,
+  siteName,
+  type ActivePage,
+} from "@/lib/tab";
 import { useCostLabel, useCostTotal } from "@/hooks/use-cost-label";
 import { useStored } from "@/hooks/use-stored";
 import { JobKit, jobKeyFor } from "./job-kit";
@@ -41,6 +52,8 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
   const [page, setPage] = useState<ActivePage | null>(null);
   const [error, setError] = useState("");
   const [guidance, setGuidance] = useState("");
+  /** Sites Alfred must be allowed on before it can read this page. */
+  const [access, setAccess] = useState<string[]>([]);
   const [scanning, setScanning] = useState(true);
   const [filling, setFilling] = useState(false);
   const pageRef = useRef<ActivePage | null>(null);
@@ -53,9 +66,14 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
       setPage(next);
       setError("");
       setGuidance("");
+      setAccess([]);
     } catch (err) {
       setPage(null);
-      if (err instanceof PageUnavailable) {
+      setAccess(err instanceof NeedsAccess ? err.origins : []);
+      if (err instanceof NeedsAccess) {
+        setGuidance("");
+        setError("");
+      } else if (err instanceof PageUnavailable) {
         setGuidance(err.message);
         setError("");
       } else {
@@ -79,7 +97,10 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
     browser.tabs.onActivated.addListener(onActivated);
     browser.tabs.onUpdated.addListener(onUpdated);
     browser.runtime.onMessage.addListener(onMessage);
+    // Access can also be granted from the browser's own extension menu.
+    browser.permissions.onAdded.addListener(onActivated);
     return () => {
+      browser.permissions.onAdded.removeListener(onActivated);
       browser.tabs.onActivated.removeListener(onActivated);
       browser.tabs.onUpdated.removeListener(onUpdated);
       browser.runtime.onMessage.removeListener(onMessage);
@@ -174,10 +195,11 @@ export function ApplyView({ onOpenProfile, setupBanner }: Props) {
           sub={report.job.company || undefined}
         />
       ) : (
-        !scanning && <ViewTitle eyebrow={<Eyebrow>This page</Eyebrow>} title="Nothing to fill here yet." />
+        !scanning && access.length === 0 && <ViewTitle eyebrow={<Eyebrow>This page</Eyebrow>} title="Nothing to fill here yet." />
       )}
 
-      {scanning && !page && !error && !guidance && <LoadingTray />}
+      {access.length > 0 && <AllowSite origins={access} />}
+      {scanning && !page && !error && !guidance && access.length === 0 && <LoadingTray />}
       {error && <Notice tone="stop">{error}</Notice>}
       {(guidance || (report && !report.isApplication && !report.job.title)) && (
         <>
@@ -376,6 +398,33 @@ function HowToUse() {
         ))}
       </ol>
     </Tray>
+  );
+}
+
+/** Alfred reads only sites the user allows; this asks once per site. */
+function AllowSite({ origins }: { origins: string[] }) {
+  const [declined, setDeclined] = useState(false);
+  const names = origins.map(siteName);
+  // No awaits before the request: the browser only shows its prompt straight after a click.
+  const allow = () => void requestAccess(origins).then((granted) => setDeclined(!granted));
+  return (
+    <BentoTile tone="accent" className={stagger(1)}>
+      <p className="text-[15px] font-semibold leading-snug">Let Alfred read this site?</p>
+      <p className="mt-1.5 text-[12.5px] leading-relaxed opacity-80">
+        Alfred only reads sites you allow, and only while you use it there. You’ll be asked once for{" "}
+        {names.map((name, i) => (
+          <span key={name}>
+            {i > 0 && (i === names.length - 1 ? " and " : ", ")}
+            <strong className="font-semibold">{name}</strong>
+          </span>
+        ))}
+        .
+      </p>
+      <Button size="lg" className="mt-4 w-full !bg-[var(--ink)] !text-[var(--core)]" icon={CheckCircleIcon} onClick={allow}>
+        Allow on {names.length === 1 ? "this site" : "these sites"}
+      </Button>
+      {declined && <p className="mt-2.5 text-[12px] opacity-80">Not allowed. Alfred won’t read this page until you allow it.</p>}
+    </BentoTile>
   );
 }
 

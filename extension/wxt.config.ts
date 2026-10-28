@@ -15,14 +15,26 @@ export default defineConfig({
     // The shared profile and AI modules live beside the extension, in ../shared.
     server: { fs: { allow: [".", sharedDir] } },
   }),
+  hooks: {
+    // WXT grants a runtime content script's matches up front; Alfred asks per site instead.
+    "build:manifestGenerated": (_wxt, manifest) => {
+      manifest.host_permissions = manifest.host_permissions?.filter((pattern: string) => pattern !== "<all_urls>");
+    },
+  },
   manifest: {
     name: "Alfred",
     description:
       "Fills job applications from your saved profile, tailors your CV and drafts cover letters. You review and submit.",
-    permissions: ["storage", "unlimitedStorage", "sidePanel", "tabs", "webNavigation"],
-    // Alfred reads application forms on any job site you open, and calls
-    // Alfred's API or the AI provider you chose.
-    host_permissions: ["<all_urls>"],
+    permissions: ["storage", "unlimitedStorage", "sidePanel", "tabs", "webNavigation", "scripting"],
+    // The AI providers Alfred can call with the user's own key. Alfred's API answers with CORS instead.
+    host_permissions: [
+      "https://api.anthropic.com/*",
+      "https://api.deepseek.com/*",
+      "https://api.openai.com/*",
+      "https://generativelanguage.googleapis.com/*",
+    ],
+    // Job sites are asked for one at a time, the first time the user opens Alfred on them.
+    optional_host_permissions: ["https://*/*", "http://*/*"],
     action: { default_title: "Open Alfred" },
     // The side panel API arrived in Chrome 114; older Chromium builds use Alfred's own window instead.
     minimum_chrome_version: "110",
