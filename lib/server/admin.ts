@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import type { AdminUser } from "@/shared/admin";
 import type { UserDoc } from "./db";
 import { userForToken } from "./auth";
-import { env } from "./env";
+import { EMAIL_VERIFICATION, env } from "./env";
 import { ApiError } from "./http";
 
 export const ADMIN_COOKIE = "alfred_admin";
@@ -15,7 +15,8 @@ export function isOwner(user: Pick<UserDoc, "email">) {
 }
 
 export function isAdmin(user: UserDoc) {
-  return Boolean(user.emailVerifiedAt && !user.suspended && (isOwner(user) || user.role === "admin"));
+  const verified = Boolean(user.emailVerifiedAt) || !EMAIL_VERIFICATION;
+  return Boolean(verified && !user.suspended && (isOwner(user) || user.role === "admin"));
 }
 
 /** True when two addresses are the same site, treating the bare domain and www. as one. */

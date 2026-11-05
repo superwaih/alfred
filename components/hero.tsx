@@ -18,14 +18,8 @@ export function Hero() {
       <div className="mt-10 flex flex-1 flex-col gap-12 lg:mt-0 lg:flex-row lg:items-end lg:justify-between">
         <div data-reveal className={`max-w-[38rem] lg:pb-2 ${STAGGER[1]}`}>
           <p className="text-lead leading-snug text-ground-ink">
-            Save your details once. Alfred fills the application forms, tailors your CV and drafts
-            the cover letter.
-          </p>
-          <p className="mt-5 max-w-[34rem] text-body text-ground-ink">
-            It’s a browser extension for people applying to a lot of jobs, and it runs in Chrome,
-            Edge, Brave, Arc, Opera or any other browser built on Chromium. On an application page
-            it fills every question it can answer from your profile, asks you about the ones it
-            can’t, and leaves the Submit button to you.
+            Save your details once. Alfred fills job applications, tailors your CV and drafts the
+            cover letter. You press Submit.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
             <ActionLink href={INSTALL_URL}>Add to your browser</ActionLink>

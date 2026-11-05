@@ -37,8 +37,14 @@ async function request<T>(path: string, init: RequestInit & { auth?: boolean } =
   return body as T;
 }
 
-export async function register(email: string, password: string, name: string): Promise<{ challengeId: string }> {
-  return request("/auth/register", { method: "POST", body: JSON.stringify({ email, password, name }), auth: false });
+/** Returns a challenge when the server emails a code first, or the new session when it doesn't. */
+export async function register(email: string, password: string, name: string): Promise<{ challengeId: string } | Session> {
+  const result = await request<{ challengeId: string } | Session>("/auth/register", { method: "POST", body: JSON.stringify({ email, password, name }), auth: false });
+  if ("token" in result) {
+    await billingItem.setValue(null);
+    await sessionItem.setValue(result);
+  }
+  return result;
 }
 
 export async function verifyRegistration(challengeId: string, code: string): Promise<Session> {

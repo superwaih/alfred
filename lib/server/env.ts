@@ -24,3 +24,9 @@ export const env = {
       .map((origin) => origin.trim())
       .filter(Boolean),
 };
+
+/**
+ * Email codes for new accounts. Off for now (set EMAIL_VERIFICATION=on to bring them back):
+ * accounts are created straight away and signed in.
+ */
+export const EMAIL_VERIFICATION = process.env.EMAIL_VERIFICATION === "on";

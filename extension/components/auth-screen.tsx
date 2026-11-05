@@ -49,8 +49,12 @@ export function AuthScreen() {
         await resetPassword(challengeId, code, password);
         backToSignIn(); setMessage("Password updated. Sign in with your new password.");
       } else if (creating) {
-        setChallengeId((await register(email, password, name)).challengeId);
-        setStep("verify"); setCode(""); setMessage("Check your email for a six-digit code. It expires in 10 minutes.");
+        const result = await register(email, password, name);
+        // A session means the account is ready and signed in; otherwise a code was emailed.
+        if ("challengeId" in result) {
+          setChallengeId(result.challengeId);
+          setStep("verify"); setCode(""); setMessage("Check your email for a six-digit code. It expires in 10 minutes.");
+        }
       } else await signIn(email, password);
     } catch (err) {
       setError(errorMessage(err));
@@ -125,7 +129,7 @@ export function AuthScreen() {
             setBusy(true); setError("");
             try {
               const next = step === "verify" ? await register(email, password, name) : await forgotPassword(email);
-              setChallengeId(next.challengeId); setCode(""); setMessage("A new code has been sent. Check your inbox and spam folder.");
+              if ("challengeId" in next) setChallengeId(next.challengeId); setCode(""); setMessage("A new code has been sent. Check your inbox and spam folder.");
             } catch (err) { setError(errorMessage(err)); } finally { setBusy(false); }
           }}>Resend code</button>}
         </div>}

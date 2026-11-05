@@ -3,6 +3,7 @@ import { MongoServerError, ObjectId } from "mongodb";
 import { z } from "zod";
 import { isAdmin, isOwner } from "./admin";
 import { activity, ledger, transaction, users, type UserDoc } from "./db";
+import { EMAIL_VERIFICATION } from "./env";
 import { ApiError } from "./http";
 
 const id = z.string().regex(/^[a-f0-9]{24}$/);
@@ -35,7 +36,7 @@ export async function applyUserAction(actor: UserDoc, body: z.infer<typeof userA
         await entries.insertOne({ _id: new ObjectId(), userId: targetId, delta: body.delta, reason: "admin", note: body.note, actorId: actor._id, orderId: `admin:${body.requestId}`, createdAt: new Date() }, { session });
         detail = `${body.delta > 0 ? "+" : ""}${body.delta} credits: ${body.note}`;
       } else if (body.action === "role") {
-        if (body.role === "admin" && !target.emailVerifiedAt) throw new ApiError(400, "email_unverified", "The user must verify their email before becoming an administrator.");
+        if (body.role === "admin" && EMAIL_VERIFICATION && !target.emailVerifiedAt) throw new ApiError(400, "email_unverified", "The user must verify their email before becoming an administrator.");
         result = await collection.findOneAndUpdate({ _id: targetId }, { $set: { role: body.role }, $inc: { tokenVersion: 1 } }, { session, returnDocument: "after" });
         detail = `${target.role || "user"} → ${body.role}`;
       } else if (body.action === "suspend") {

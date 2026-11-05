@@ -3,8 +3,9 @@ import { createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto
 import { MongoServerError, ObjectId } from "mongodb";
 import { challenges, ledger, transaction, users, type AuthChallenge, type UserDoc } from "./db";
 import { env } from "./env";
+export { EMAIL_VERIFICATION } from "./env";
 import { ApiError } from "./http";
-import { sendOtp } from "./email";
+import { emailConfigured, sendOtp } from "./email";
 import { rateLimit } from "./rate-limit";
 import { appSettings } from "./settings";
 import { hashPassword } from "./auth";
@@ -15,6 +16,8 @@ export function otpHash(id: string, code: string) {
 }
 
 export async function startChallenge(email: string, purpose: AuthChallenge["purpose"], registration?: { name: string; password: string }) {
+  // Checked first so a missing email setup doesn't use up the person's attempts.
+  if (!emailConfigured()) throw new ApiError(503, "email_unavailable", "Email is not configured yet. Please contact support.");
   await rateLimit(`email-minute:${email}`, 1, 60_000);
   await rateLimit(`email-hour:${email}`, 5, 3_600_000);
   await rateLimit("email-global", 300, 900_000);
@@ -58,12 +61,24 @@ export async function consumeChallenge(id: string, code: string, purpose: AuthCh
 
 export async function finishRegistration(id: string, code: string): Promise<UserDoc> {
   const challenge = await consumeChallenge(id, code, "register");
+  if (!challenge.passwordHash) throw new ApiError(400, "invalid_code", "Request a new verification code.");
+  return createAccount(challenge.email, challenge.name || "", challenge.passwordHash, true);
+}
+
+/** Registration while email codes are off: the account is created at once, unverified. */
+export async function registerWithoutCode(email: string, name: string, password: string): Promise<UserDoc> {
+  await rateLimit(`register:${email}`, 5, 3_600_000);
+  await rateLimit("register-global", 300, 900_000);
+  return createAccount(email, name, await hashPassword(password), false);
+}
+
+async function createAccount(email: string, name: string, passwordHash: string, verified: boolean): Promise<UserDoc> {
   const settings = await appSettings();
   if (!settings.registrationsOpen) throw new ApiError(403, "registration_closed", "New registrations are currently paused.");
-  if (!challenge.passwordHash) throw new ApiError(400, "invalid_code", "Request a new verification code.");
   const user: UserDoc = {
-    _id: new ObjectId(), email: challenge.email, name: challenge.name || "", passwordHash: challenge.passwordHash,
-    credits: settings.starterCredits, tokenVersion: 1, emailVerifiedAt: new Date(), createdAt: new Date(), lastLoginAt: new Date(),
+    _id: new ObjectId(), email, name, passwordHash,
+    credits: settings.starterCredits, tokenVersion: 1, createdAt: new Date(), lastLoginAt: new Date(),
+    ...(verified ? { emailVerifiedAt: new Date() } : {}),
   };
   const userCollection = await users();
   const ledgerCollection = await ledger();
@@ -73,7 +88,7 @@ export async function finishRegistration(id: string, code: string): Promise<User
       if (user.credits) await ledgerCollection.insertOne({ _id: new ObjectId(), userId: user._id, delta: user.credits, reason: "starter", createdAt: new Date() }, { session });
     });
   } catch (error) {
-    if (error instanceof MongoServerError && error.code === 11000) throw new ApiError(409, "email_taken", "This account already exists. Sign in instead.");
+    if (error instanceof MongoServerError && error.code === 11000) throw new ApiError(409, "email_taken", "There's already an account with that email. Sign in instead.");
     throw error;
   }
   await recordActivity("account.registered", user.email);

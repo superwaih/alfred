@@ -10,8 +10,8 @@ import { Notice, PrimaryButton } from "./ui";
 type Step = "login" | "register" | "verify" | "forgot" | "reset";
 
 const COPY: Record<Step, { title: string; intro: string; action: string }> = {
-  login: { title: "Sign in", intro: "Administrators only. Use the account you verified by email.", action: "Sign in" },
-  register: { title: "Create an account", intro: "We’ll email you a code to confirm the address. An existing admin then grants access.", action: "Send code" },
+  login: { title: "Sign in", intro: "Administrators only.", action: "Sign in" },
+  register: { title: "Create an account", intro: "The owner’s email gets access straight away. Anyone else waits for an admin to grant it.", action: "Create account" },
   verify: { title: "Check your email", intro: "Enter the six-digit code we just sent. It lasts 10 minutes.", action: "Verify email" },
   forgot: { title: "Reset password", intro: "We’ll email you a code to set a new one.", action: "Send code" },
   reset: { title: "Choose a new password", intro: "Enter the code from your email and a new password.", action: "Save password" },
@@ -45,13 +45,21 @@ export function AdminLogin({
     setMessage("");
   }
 
+  /** Returns false when the server created the account without emailing a code. */
   async function sendCode() {
-    const result = await adminApi<{ challengeId: string }>(
+    const result = await adminApi<{ challengeId?: string }>(
       `/api/v1/auth/${step === "register" || step === "verify" ? "register" : "forgot-password"}`,
       { method: "POST", body: JSON.stringify({ email, password, name }) },
     );
-    setChallengeId(result.challengeId);
     setCode("");
+    if (!result.challengeId) return false;
+    setChallengeId(result.challengeId);
+    return true;
+  }
+
+  async function signIn() {
+    await adminApi("/api/admin/session", { method: "POST", body: JSON.stringify({ email, password }) });
+    onSignedIn();
   }
 
   async function submit(event: FormEvent) {
@@ -60,10 +68,17 @@ export function AdminLogin({
     setError("");
     try {
       if (step === "login") {
-        await adminApi("/api/admin/session", { method: "POST", body: JSON.stringify({ email, password }) });
-        onSignedIn();
+        await signIn();
+      } else if (step === "register" && !(await sendCode())) {
+        // No code needed: the account exists now. The owner goes straight in; others wait for access.
+        try {
+          await signIn();
+        } catch {
+          change("login");
+          setMessage("Account created. Sign in once an administrator has given you access.");
+        }
       } else if (step === "register" || step === "forgot") {
-        await sendCode();
+        if (step === "forgot") await sendCode();
         if (step === "forgot") setPassword("");
         setStep(step === "register" ? "verify" : "reset");
         setMessage("");

@@ -1,4 +1,5 @@
 import "server-only";
+import { CONTACT_EMAIL } from "@/lib/site";
 import { ApiError } from "./http";
 
 export function emailConfigured() { return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM); }
@@ -88,6 +89,8 @@ export async function sendOtp(email: string, code: string, purpose: Purpose) {
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: process.env.EMAIL_FROM,
+      // The sending address has no inbox, so replies go to the support mailbox.
+      reply_to: CONTACT_EMAIL,
       to: [email],
       subject: COPY[purpose].subject,
       html: otpHtml(code, purpose),

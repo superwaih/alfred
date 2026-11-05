@@ -13,7 +13,7 @@ export const POST = handle(async request => {
   await rateLimit(`admin-login:${body.email}`, 10, 900_000);
   const user = await (await users()).findOne({ email: body.email });
   if (!user || !(await verifyPassword(body.password, user.passwordHash)) || !isAdmin(user)) {
-    throw new ApiError(401, "invalid_credentials", "Sign in with a verified administrator account.");
+    throw new ApiError(401, "invalid_credentials", "Sign in with an administrator account.");
   }
   (await cookies()).set(ADMIN_COOKIE, await issueToken(user, "alfred-admin"), adminCookieOptions);
   await (await users()).updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } });
