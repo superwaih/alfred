@@ -1,5 +1,5 @@
-// Replace with the extension's Chrome Web Store listing once it is published.
-export const INSTALL_URL = "https://chromewebstore.google.com/";
+// Alfred's Chrome Web Store listing.
+export const INSTALL_URL = "https://chromewebstore.google.com/detail/alfred/nclmcckniojidefeiddlehlplcicdjgn";
 
 /** Alfred installs from the Chrome Web Store into any Chromium browser. */
 export const BROWSERS = ["Chrome", "Edge", "Brave", "Arc", "Opera", "Vivaldi"] as const;
