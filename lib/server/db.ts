@@ -38,7 +38,14 @@ export type LedgerDoc = {
 const globalForMongo = globalThis as unknown as { alfredMongo?: Promise<MongoClient> };
 
 function client(): Promise<MongoClient> {
-  globalForMongo.alfredMongo ??= new MongoClient(env.mongoUri()).connect();
+  // Fail fast rather than hang the request, and forget a failed connection so the next
+  // request tries again instead of repeating the same error until the server restarts.
+  globalForMongo.alfredMongo ??= new MongoClient(env.mongoUri(), { serverSelectionTimeoutMS: 10_000 })
+    .connect()
+    .catch((error: unknown) => {
+      globalForMongo.alfredMongo = undefined;
+      throw error;
+    });
   return globalForMongo.alfredMongo;
 }
 
@@ -53,7 +60,13 @@ async function db(): Promise<Db> {
     database.collection("users").createIndex({ email: 1 }, { unique: true }),
     database.collection("ledger").createIndex({ userId: 1, createdAt: -1 }),
     database.collection("ledger").createIndex({ orderId: 1 }, { unique: true, partialFilterExpression: { orderId: { $type: "string" } } }),
-  ]).then(() => undefined);
+  ]).then(
+    () => undefined,
+    (error: unknown) => {
+      indexesReady = null; // try again on the next request
+      throw error;
+    },
+  );
   await indexesReady;
   return database;
 }
